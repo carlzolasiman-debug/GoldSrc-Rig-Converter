@@ -1,0 +1,1873 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10131b">
+<title>GoldSrc Rig Converter</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0e14;--panel:#141a24;--panel2:#1b2431;--line:#2b3748;--txt:#e9eef7;--muted:#9aa8ba;--accent:#75a7ff;--good:#55d6a0;--warn:#ffc66d;--bad:#ff7d86}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:#101621ee;border-bottom:1px solid var(--line);padding:12px 14px;backdrop-filter:blur(12px)}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:1200px;margin:auto}.brand{font-weight:800;letter-spacing:.04em}.brand small{display:block;color:var(--muted);font-weight:500;letter-spacing:0;font-size:11px}
+main{max-width:1200px;margin:auto;padding:14px;display:grid;grid-template-columns:310px minmax(0,1fr);gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}.pad{padding:13px}.section{font-weight:750;margin:0 0 10px}.muted{color:var(--muted)}.tiny{font-size:11px;color:var(--muted)}
+.filebox{border:1px dashed #52647c;border-radius:10px;padding:12px;margin:8px 0;background:#111824}.filebox input{width:100%;font-size:12px}.filebox strong{display:block;margin-bottom:4px}
+.status{font-size:12px;margin-top:7px;color:var(--muted);overflow-wrap:anywhere}.status.ok{color:var(--good)}.status.err{color:var(--bad)}.status.warn{color:var(--warn)}
+label{display:block;color:var(--muted);font-size:12px;margin:9px 0 4px}input[type=text],input[type=number],select{width:100%;background:#0d131d;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:9px;font:inherit}
+button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit;font-weight:650;cursor:pointer}button.primary{background:#2d5fae;border-color:#477bc9}button:disabled{opacity:.4;cursor:not-allowed}.btnrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.btnrow button{flex:1}
+.viewportWrap{min-height:430px;display:flex;flex-direction:column}.viewtop{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}.viewport{height:430px;position:relative;background:radial-gradient(ellipse at center,#202b3a,#0c111a 72%);touch-action:pan-y}.viewport canvas{display:block;width:100%;height:100%}.overlay{position:absolute;left:10px;bottom:10px;background:#080c12c9;padding:7px 9px;border:1px solid #344255;border-radius:8px;font-size:11px;color:var(--muted);pointer-events:none}
+.tabs{display:flex;gap:6px;overflow:auto;padding:9px;border-bottom:1px solid var(--line)}.tab{white-space:nowrap;font-size:12px}.tab.active{background:#294e80;border-color:#568bd2}
+.tabpane{display:none;padding:13px}.tabpane.active{display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.metric{background:#0f1621;border:1px solid var(--line);padding:10px;border-radius:9px}.metric b{display:block;font-size:18px}.metric span{font-size:11px;color:var(--muted)}
+.list{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:9px}.listrow{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:7px;border-bottom:1px solid #263141;align-items:center}.listrow:last-child{border:0}.listrow span{font-size:12px;overflow-wrap:anywhere}
+.progress{height:6px;background:#263244;border-radius:9px;overflow:hidden;margin-top:8px}.progress i{display:block;height:100%;width:0;background:var(--good)}
+#boneReadout{white-space:pre-line;font-size:12px;background:#0f1621;border:1px solid var(--line);border-radius:9px;padding:8px;margin:8px 0;color:var(--txt)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.nudge{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}.nudge button{padding:10px 0}
+.viewbtns{position:absolute;top:8px;left:8px;right:8px;z-index:3;display:flex;gap:5px;flex-wrap:wrap}.viewbtns button{padding:6px 10px;font-size:12px;background:#0b111bcc;backdrop-filter:blur(6px)}
+.side,.work,.tabpane{min-width:0}select,input{max-width:100%}
+footer{max-width:1200px;margin:0 auto;padding:0 14px 20px;color:var(--muted);font-size:11px}
+.notice{padding:10px;border-radius:9px;background:#182337;border:1px solid #304563;color:#c7d8f2;font-size:12px;margin:8px 0}
+.check{display:flex;align-items:center;gap:7px;margin:8px 0;color:var(--muted);font-size:12px}.check input{accent-color:var(--accent)}
+@media(max-width:800px){main{grid-template-columns:minmax(0,1fr);padding:9px}.viewport{height:360px}.viewportWrap{min-height:360px}.side{order:2}.work{order:1}.grid3{grid-template-columns:repeat(3,1fr)}header{padding:10px}.head{align-items:flex-start}}
+.work.panel{overflow:visible}.work .viewport{position:sticky;top:var(--hh,60px);z-index:4}
+.work .vpRow{position:sticky;top:var(--hh,60px);z-index:4;display:flex;gap:2px;background:#0c111a}
+.work .vpRow .viewport{position:relative;top:auto;flex:1 1 0;min-width:0}
+#viewport2{display:none}body.rig.v2on #viewport2{display:block}
+#v2canvas{position:absolute;inset:0}#v2canvas canvas{display:block;width:100%;height:100%}
+.v2bar{position:absolute;top:6px;left:6px;right:6px;z-index:3;display:flex;gap:4px;flex-wrap:wrap}.v2bar button{padding:4px 8px;font-size:11px;background:#0b111bcc}
+.v2op{flex:1 1 100%;display:flex;align-items:center;gap:6px;margin:0;padding:2px 6px;border-radius:8px;background:#0b111bcc;font-size:11px;color:var(--txt)}.v2op input{flex:1;min-width:0;margin:0}
+.v2info{position:absolute;left:6px;right:6px;bottom:6px;z-index:3;background:#0b111bdd;border:1px solid var(--line);border-radius:8px;padding:6px;font-size:11px;line-height:1.35}.v2info button{padding:3px 8px;font-size:11px;margin-top:3px}
+body.rig.v2on .viewbtns button{padding:4px 6px;font-size:11px}
+@media(max-width:800px){.work .viewport{height:44vh}.viewtop{display:none}}
+@media(max-width:420px){.grid2{grid-template-columns:1fr 1fr}.viewport{height:320px}.listrow{grid-template-columns:1fr 1fr}}
+
+.pickbtn{width:100%;display:flex;justify-content:space-between;align-items:center;gap:6px;text-align:left;background:#0d131d;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:9px;font:inherit;min-height:38px;cursor:pointer}.pickbtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pickbtn b{color:var(--muted);font-weight:400}
+.pkov{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.65);display:flex;justify-content:center;align-items:flex-start;padding-top:env(safe-area-inset-top,0px)}
+.pkbox{width:100%;max-width:560px;max-height:72vh;display:flex;flex-direction:column;background:#161d2b;border:1px solid var(--line);border-radius:0 0 14px 14px;overflow:hidden}
+.pktop{display:flex;gap:8px;padding:10px}.pktop input{flex:1;font-size:16px}.pkx{background:#0d131d;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:0 14px;font:inherit}
+.pkchk{padding:0 12px 6px;margin:0}.pkinfo{padding:0 12px 6px;font-size:12px;color:var(--muted)}
+.pklist{overflow:auto;border-top:1px solid var(--line)}.pkitem{display:block;width:100%;text-align:left;background:transparent;color:var(--txt);border:0;border-bottom:1px solid #263141;padding:12px;font:inherit;cursor:pointer}.pkitem.sel{background:#1f3a66;font-weight:600}
+</style>
+</head>
+<body class="rig">
+<header><div class="head"><div class="brand">GOLDSRC RIG CONVERTER <small>GLB → Raze skeleton → SMD / QC</small></div><div class="tiny" id="engineState">Starting 3D engine…</div></div></header>
+<main>
+<aside class="panel side">
+ <div class="pad">
+  <h3 class="section">1 · Load your files</h3>
+  <div class="filebox"><strong>Character GLB</strong><div class="tiny">Valorant character mesh, e.g. clove_cs.glb</div><input id="glbFile" type="file" accept=".glb"></div>
+  <div class="filebox"><strong>Target reference SMD</strong><div class="tiny">Select raze_1.smd AND raze_2, raze_3, raze_4 together (Raze's body is split across them). Or load them by picking the ZIP below.</div><input id="refFile" type="file" accept=".smd" multiple></div>
+  <div class="filebox"><strong>Raze animation files or ZIP</strong><div class="tiny">Select one or more .smd animations, or the original decompile ZIP</div><input id="animFiles" type="file" accept=".smd,.zip" multiple></div>
+  <div class="filebox"><strong>Clove textures (optional)</strong><div class="tiny">PNG, JPG, WEBP or BMP. Pick all of them at once. They are matched to the materials by name, and you can change each one below. TGA is not supported, so convert it to PNG first.</div><input id="texFiles" type="file" accept="image/*,.bmp" multiple><div id="texStatus" class="status">No textures loaded.</div><div class="btnrow"><button id="texClear">Remove all textures</button></div><div id="matList" class="list" style="margin-top:8px"></div></div>
+  <div id="fileStatus" class="status">No files loaded yet.</div>
+  <div class="btnrow"><button id="clearBtn">Clear session</button><button id="sampleBtn">Load sample skeleton</button></div>
+ </div>
+ <div class="pad" style="border-top:1px solid var(--line)">
+  <h3 class="section">2 · Alignment</h3>
+  <div class="grid2">
+   <div><label>Scale</label><input id="scale" type="number" step=".01" value="1"></div>
+   <div><label>Rotation Z°</label><input id="rot" type="number" step="1" value="0"></div>
+   <div><label>Offset X</label><input id="ox" type="number" step=".5" value="0"></div>
+   <div><label>Offset Y</label><input id="oy" type="number" step=".5" value="0"></div>
+   <div><label>Offset Z</label><input id="oz" type="number" step=".5" value="0"></div>
+   <div><label>GLB axis</label><select id="axis"><option value="keep">Keep GLB axes</option><option value="yup">Y-up → Z-up</option><option value="zup">Z-up → Y-up</option></select></div>
+  </div>
+  <label>Display</label><select id="displayMode"><option value="both">Character + target skeleton</option><option value="character">Character only</option><option value="skeleton">Target skeleton only</option></select>
+  <label class="check"><input type="checkbox" id="ghostRef" checked> Show Raze body as ghost wireframe</label>
+  <div class="btnrow"><button class="primary" id="autoFit">Auto-fit to Raze</button><button id="applyAlign">Apply alignment</button><button id="centerBtn">Center view</button></div>
+ </div>
+</aside>
+<section class="panel work">
+ <div class="viewtop"><strong>3D Preview</strong><span class="tiny" id="viewInfo">Drag to orbit · pinch/scroll to zoom</span></div>
+ <div class="vpRow">
+ <div class="viewport" id="viewport"><div class="viewbtns"><button data-view="front">Front</button><button data-view="back">Back</button><button data-view="left">Left</button><button data-view="right">Right</button><button data-view="top">Top</button><button data-view="persp">3D</button><label class="v2op">Clove <input type="range" id="v1Op" min="0" max="100" value="100"></label></div><div class="overlay" id="viewOverlay">Load a GLB and Raze reference SMD to begin.</div></div>
+ <div class="viewport" id="viewport2"><div id="v2canvas"></div><div class="v2bar"><button id="v2Front">Front</button><button id="v2Side">Side</button><button id="v2All">All joints</button><button id="v2Close">✕</button><label class="v2op">Body <input type="range" id="v2Op" min="0" max="100" value="22"></label></div><div class="v2info" id="v2Info"></div></div>
+ </div>
+ <div class="tabs">
+  <button class="tab active" data-tab="rig">Rig & mapping</button><button class="tab" data-tab="editor">Bone editor</button><button class="tab" data-tab="weights">Weight transfer</button><button class="tab" data-tab="pose">Pose</button><button class="tab" data-tab="animations">Animations</button><button class="tab" data-tab="export">Export</button>
+ </div>
+ <div id="rig" class="tabpane active">
+  <div class="notice">Automatic mapping is a starting point, not a guarantee. Inspect every important joint before exporting. The converter never modifies your original uploads.</div>
+  <div class="btnrow"><button class="primary" id="v2Toggle">Show Clove bones viewer (side by side)</button></div>
+  <div class="grid3">
+   <div class="metric"><b id="meshCount">0</b><span>Meshes</span></div><div class="metric"><b id="glbBones">0</b><span>GLB joints</span></div><div class="metric"><b id="targetBones">0</b><span>Target bones</span></div>
+  </div>
+  <div class="btnrow"><button class="primary" id="autoMap">Auto-map bones</button><button id="resetMap">Reset mapping</button></div>
+  <label>Key joints · each Raze bone → the Clove joint that plays the same role</label>
+  <div class="list" id="keyList"><div class="listrow"><span class="muted">Load both files to show key joints.</span></div></div>
+  <div class="tiny" style="margin:6px 0 10px">Only these ~24 matter for posing the limbs. Check the arms, forearms, thighs, calves and feet are the right joints (not twist/helper joints).</div>
+  <label>All joints · source GLB bone → target Raze bone (optional)</label>
+  <div class="list" id="mappingList"><div class="listrow"><span class="muted">Load both files to show mapping.</span></div></div>
+  <div class="tiny" style="margin-top:8px">Joints you leave unmapped automatically inherit the mapping of their nearest mapped parent (fingers follow the hand, hair follows the head, etc.).</div>
+ </div>
+ <div id="editor" class="tabpane">
+  <div class="notice">Move Raze's skeleton so every joint sits inside Clove. Tip: press <b>Snap</b> first (it runs Calculate weight transfer for you if needed, so you see the posed Clove), then fine-tune joints by dragging the gizmo or tapping the nudge buttons. Moved bones are used for the live preview, the animation preview and the export — animations are shifted to match.</div>
+  <div class="btnrow"><button class="primary" id="snapBtn">Snap Raze bones to Clove joints</button></div>
+  <label class="check"><input type="checkbox" id="keepEdited" checked> Keep bones I moved by hand (Snap skips them)</label>
+  <div class="btnrow"><button id="snapSelBtn">Snap selected bone only</button></div>
+  <label>Selected bone — or tap a bone ball in the viewport</label><select id="boneSel"></select>
+  <div id="boneReadout">No bone selected.</div>
+  <div class="tiny" style="margin:6px 0 2px">Touch a bone ball and drag it. It slides in the flat plane you are looking at, so use Front / Left / Top to place it in all three directions. Dragging empty space still rotates the view.</div>
+  <label class="check"><input type="checkbox" id="gizmoOn"> Show arrow gizmo instead (advanced)</label>
+  <label class="check"><input type="checkbox" id="childFollow" checked> Children follow when I move a bone (off = they stay put)</label>
+  <label class="check"><input type="checkbox" id="xray" checked> Draw bones in front of Clove</label>
+  <label>Clove opacity</label><input type="range" id="cloveOpacity" min="0.05" max="1" step="0.05" value="0.5">
+  <label>Raze mesh (wireframe) opacity</label><input type="range" id="ghostOp" min="0" max="1" step="0.05" value="0.2">
+  <label>Bone opacity</label><input type="range" id="boneOp" min="0.1" max="1" step="0.05" value="1">
+  <label>Bone ball size</label><input type="range" id="ballSize" min="0.5" max="6" step="0.25" value="2.5">
+  <label>Bone thickness</label><input type="range" id="boneThick" min="0.1" max="1.5" step="0.05" value="0.35">
+  <label>Bone colour</label><input type="color" id="boneColor" value="#39ff88" style="width:100%;height:38px;background:#0d131d;border:1px solid var(--line);border-radius:8px">
+  <label>Nudge step (units)</label><input type="number" id="nudge" value="0.5" step="0.1">
+  <div class="nudge"><button data-n="x" data-s="-1">−X</button><button data-n="x" data-s="1">+X</button><button data-n="y" data-s="-1">−Y</button><button data-n="y" data-s="1">+Y</button><button data-n="z" data-s="-1">−Z</button><button data-n="z" data-s="1">+Z</button></div>
+  <div class="btnrow"><button id="mirrorL">Copy left → right</button><button id="mirrorR">Copy right → left</button></div>
+  <div class="btnrow"><button id="undoBtn">Undo last move</button></div>
+  <div class="btnrow"><button id="resetBone">Reset this bone</button><button id="resetAllBones">Reset all bones</button></div>
+  <div id="editStatus" class="status">Load both files to edit bones.</div>
+ </div>
+ <div id="weights" class="tabpane">
+  <div class="notice">Weight transfer copies Raze's weights onto Clove (or estimates them from bone distance, depending on the method below). This is a practical starting method; shoulders, fingers, clothing and overlapping accessories may need manual cleanup in Blender.</div>
+  <label class="check"><input type="checkbox" id="poseMatch" checked> Match Clove's arms/legs to Raze's rest pose first (recommended)</label>
+  <div class="tiny" style="margin-bottom:6px">Clove stands with arms down, Raze with arms out. Without this, Raze's elbow/wrist pivots sit in empty space away from Clove's arms, so animation drags and stretches them. Uses the Key joints above.</div>
+  <label>Transfer method</label><select id="wMethod"><option value="donor" selected>Raze mesh → Clove: nearest face interpolated (Blender Data Transfer style)</option><option value="mapped">GLB skin weights via bone mapping, then bone-distance fallback</option></select>
+  <label>Influences per vertex</label><select id="influences"><option>1</option><option selected>2</option><option>3</option><option>4</option></select>
+  <label>Distance falloff</label><select id="falloff"><option value="1">Linear inverse distance</option><option value="2" selected>Inverse square</option><option value="3">Inverse cube</option></select>
+  <label>Exclude helper/root bones</label><select id="excludeRoot"><option value="yes">Yes</option><option value="no">No</option></select>
+  <label class="check"><input type="checkbox" id="armClean" checked> Clean up arm weights (fixes pinched / stretched / twisted arms)</label>
+  <div class="tiny" style="margin-bottom:6px">Removes Spine / Pelvis weights from the arms and replaces the jagged upper-arm / forearm / hand boundaries with a clean one. Shoulders and fingers keep the transfer result.</div>
+  <label>Elbow blend: <span id="elbowBlendV">0.15</span> <span class="tiny">(0 = hard cut, higher = smoother but more pinching)</span></label><input type="range" id="elbowBlend" min="0" max="0.5" step="0.01" value="0.15">
+  <label>Wrist blend: <span id="wristBlendV">0.15</span> <span class="tiny">(the wrist seam is found automatically)</span></label><input type="range" id="wristBlend" min="0" max="0.5" step="0.01" value="0.15">
+  <div class="btnrow"><button class="primary" id="transferBtn">Calculate weight transfer</button></div>
+  <div class="progress"><i id="weightProgress"></i></div>
+  <div id="weightStatus" class="status">Weights have not been calculated.</div>
+ </div>
+ <div id="pose" class="tabpane">
+  <div class="notice">Pose Clove's mesh by hand, like Blender's pose mode. Pick a bone (or tap its ball in the viewport) and turn it with the sliders; the mesh deforms live. Children follow their parent. When the pose looks right, press <b>Bake pose into mesh</b> to make it permanent in Clove's geometry (the skeleton and animations stay compatible). Use it to fix arm width, palm direction, shoulders, etc. Rotation is around the world axes at the bone's pivot (X = left/right, Y = front/back, Z = up).</div>
+  <label>Bone</label><div id="posePick"><select id="poseSel"></select></div>
+  <label>Rotate X: <span id="poseXV">0</span>°</label><input type="range" id="poseX" min="-180" max="180" step="1" value="0">
+  <label>Rotate Y: <span id="poseYV">0</span>°</label><input type="range" id="poseY" min="-180" max="180" step="1" value="0">
+  <label>Rotate Z: <span id="poseZV">0</span>°</label><input type="range" id="poseZ" min="-180" max="180" step="1" value="0">
+  <div class="btnrow"><button id="poseResetBone">Reset this bone</button><button id="poseResetAll">Reset all bones</button></div>
+  <div class="btnrow"><button class="primary" id="poseBake">Bake pose into mesh</button><button id="poseUndoBake">Undo last bake</button></div>
+  <div id="poseStatus" class="status">Calculate weight transfer first, then pick a bone.</div>
+ </div>
+ <div id="animations" class="tabpane">
+  <div class="notice">Upload Raze animation SMDs (idle, walk, run, crouch, jump, death, etc. — any count). The tool checks whether their node indices and names match the reference skeleton. Once weight transfer has built the live bound mesh (Weight transfer tab), playback drives Raze's bones directly, and Clove's actual skinned mesh deforms with them. It does not retarget Clove's original GLB animations automatically.</div>
+  <div id="animList" class="list"><div class="listrow"><span class="muted">No animation files loaded.</span></div></div>
+  <label>Preview animation <span class="tiny">(tap to search by name)</span></label><div id="animPick"><select id="animSelect"><option value="">No animation loaded</option></select></div>
+  <div class="btnrow"><button id="playAnim" class="primary">Play preview</button><button id="animPause">Pause</button><button id="stopAnim">Stop</button></div>
+  <label>Frame: <span id="animFrameV">0 / 0</span> <span class="tiny">(drag to scrub; pauses playback)</span></label><input type="range" id="animFrame" min="0" max="0" step="1" value="0">
+  <div class="tiny" style="margin:8px 0 2px">The <b>blue wireframe</b> is the original Raze reference: it has its own skeleton, so it always plays Raze's untouched animation while you correct Clove. To keep a pose as a fixed reference, pause on a frame and press <b>Snap Raze reference</b>: an <b>orange</b> copy stays in place (for reference only) until you remove it. Nothing else is changed.</div>
+  <div class="btnrow"><button id="snapRefBtn" class="primary">Snap Raze reference</button><button id="unsnapRefBtn">Remove snapshot</button></div>
+  <div id="selBoneBox" class="notice" style="border-color:#568bd2"><b>Selected bone:</b> <span id="selBoneName">none</span><br><span class="tiny">Tap a bone ball in the 3D view, even while the animation is playing. The orange dot marks it. Rotate / flip / scale it below.</span></div>
+  <div class="tiny" style="margin:12px 0 2px"><b>Animation pose correction</b> — rotate a bone in every frame of an animation (or all animations), e.g. to bring arms in. Live while an animation plays (it starts playing when you move a slider). Included in the exported animation SMDs. Rotation is around the world axes at the bone's pivot (X = left/right, Y = front/back, Z = up).</div>
+  <label>Apply to</label><select id="aoScope"><option value="one" selected>Selected animation only</option><option value="all">All animations</option></select>
+  <label>Bone</label><div id="aoPick"><select id="aoSel"></select></div>
+  <label>Rotate X: <span id="aoXV">0</span>°</label><input type="range" id="aoX" min="-180" max="180" step="1" value="0">
+  <label>Rotate Y: <span id="aoYV">0</span>°</label><input type="range" id="aoY" min="-180" max="180" step="1" value="0">
+  <label>Rotate Z: <span id="aoZV">0</span>°</label><input type="range" id="aoZ" min="-180" max="180" step="1" value="0">
+  <div class="grid3"><button id="aoFlipX">Flip X 180°</button><button id="aoFlipY">Flip Y 180°</button><button id="aoFlipZ">Flip Z 180°</button></div>
+  <div class="btnrow"><button id="aoResetBone">Reset this bone</button><button id="aoResetAll">Reset all (this scope)</button></div>
+  <div class="tiny" style="margin:14px 0 2px"><b>Bone size (scale)</b> — make the selected bone and its mesh bigger, smaller, longer or shorter. Live in the preview. Children inherit the scale (scaling an upper arm moves and scales the forearm and hand too). GoldSrc animations cannot store scale, so press <b>Bake scale into mesh</b> to make it permanent; it is then included in the export.</div>
+  <label>Scale all: <span id="sclAV">1.00</span>×</label><input type="range" id="sclA" min="0.2" max="3" step="0.01" value="1">
+  <label>Scale X: <span id="sclXV">1.00</span>×</label><input type="range" id="sclX" min="0.2" max="3" step="0.01" value="1">
+  <label>Scale Y: <span id="sclYV">1.00</span>×</label><input type="range" id="sclY" min="0.2" max="3" step="0.01" value="1">
+  <label>Scale Z: <span id="sclZV">1.00</span>×</label><input type="range" id="sclZ" min="0.2" max="3" step="0.01" value="1">
+  <div class="tiny">X / Y / Z are the bone's own axes. Try each one to find which is the length direction.</div>
+  <div class="btnrow"><button id="sclResetBone">Reset this bone</button><button id="sclResetAll">Reset all sizes</button></div>
+  <div class="btnrow"><button class="primary" id="sclBake">Bake scale into mesh</button><button id="sclUndoBake">Undo last bake</button></div>
+  <div id="sclStatus" class="status">Calculate weight transfer first, then pick a bone.</div>
+  <div id="aoStatus" class="status">Load animations, then pick a bone.</div>
+  <div class="tiny" style="margin:12px 0 2px"><b>Arm roll (twist)</b> — live. Rotates Clove's arm around its own length so palms and elbows face the right way. Needs weight transfer to be calculated first; no need to recalculate. Play an animation to judge it.</div>
+  <label>Upper arm roll: <span id="rollUV">0</span>°</label><input type="range" id="rollU" min="-180" max="180" step="5" value="0">
+  <label>Forearm roll: <span id="rollFV">0</span>°</label><input type="range" id="rollF" min="-180" max="180" step="5" value="0">
+  <label>Hand roll: <span id="rollHV">0</span>°</label><input type="range" id="rollH" min="-180" max="180" step="5" value="0">
+  <label>Apply roll to</label><select id="rollSide"><option value="both" selected>Both arms (mirrored)</option><option value="l">Left arm only</option><option value="r">Right arm only</option></select>
+  <div class="btnrow"><button id="rollReset">Reset roll</button></div>
+  <div id="rollStatus" class="status">Calculate weight transfer first.</div>
+  <div id="animStatus" class="status">Load a reference SMD and animation SMD files.</div>
+ </div>
+ <div id="export" class="tabpane">
+  <div class="notice">Exports are created locally in this browser. SMD geometry uses the target Raze bone hierarchy and calculated nearest-bone weights. A GoldSrc StudioMDL compiler is still required to build the final .MDL.</div>
+  <label>Output model name</label><input id="modelName" type="text" value="clove">
+  <label>QC $scale</label><input id="qcScale" type="number" step=".01" value="1">
+  <label>Sequence FPS</label><input id="fps" type="number" step="1" value="30">
+  <label class="check"><input type="checkbox" id="includeAnims" checked> Include uploaded animation SMDs in ZIP and QC</label>
+  <label class="check"><input type="checkbox" id="includeRef" checked> Include reference SMD</label>
+  <label class="check"><input type="checkbox" id="decimate" checked> Reduce polygons for GoldSrc</label>
+  <label>Max triangles (CS 1.6 player models: about 2,000–4,000)</label><input type="number" id="maxTris" value="3500" min="200" step="100">
+  <label class="check"><input type="checkbox" id="includeTex" checked> Include textures as GoldSrc 8-bit BMP (256 colours, power-of-two size)</label>
+  <label>Raze's original QC (recommended: keeps aim blends, hitboxes, attachments)</label><input type="file" id="razeQc" accept=".qc,.txt">
+  <label>Max texture size</label><select id="texMax"><option value="128">128</option><option value="256" selected>256</option><option value="512">512</option></select>
+  <div class="btnrow"><button class="primary" id="exportZip">Export SMD + QC ZIP</button></div>
+  <div id="exportStatus" class="status">Ready when character, reference skeleton and weights are loaded.</div>
+  <div class="notice" style="margin-top:14px"><b>Optimize a compiled .MDL (vertices only)</b><br>After you compile the ZIP with StudioMDL, load the .mdl here. Oversized submodels are split into smaller bodyparts directly inside the .mdl. Vertices, normals, UVs, bone weights, skeleton, animations, hitboxes and textures are copied unchanged, so the model keeps the same position and size. Use this instead of the SMD optimization above if the model ends up shifted or sunk after compiling.</div>
+  <label>Compiled model (.mdl)</label><input type="file" id="mdlIn" accept=".mdl">
+  <label>Max vertices per submodel</label><input type="number" id="mdlMaxV" value="1500" min="256" max="2000" step="100">
+  <div class="btnrow"><button class="primary" id="mdlSplitBtn">Split vertices and download .mdl</button></div>
+  <div id="mdlStatus" class="status">Choose a compiled .mdl file.</div>
+  <div class="tiny">The tool exports geometry/material references and QC. Texture conversion is not yet automated; export textures separately and ensure material names match GoldSrc texture names.</div>
+ </div>
+</section>
+</main>
+<footer>Local processing: your GLB/SMD files stay in this browser tab. Requires an internet connection on first load for the Three.js rendering library. For final compilation, use a compatible GoldSrc StudioMDL tool. Always keep backups.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const $=id=>document.getElementById(id);
+const v2={bodyOp:.22,on:false,all:false,hi:null,pick:null,root:null,balls:[]};
+const state={gltf:null,root:null,meshes:[],sourceBones:[],target:null,targetFileName:'',animations:[],mapping:{},weights:new Map(),renderer:null,scene:null,camera:null,controls:null,modelGroup:null,targetGroup:null,reskinnedGroup:null,animMixer:null,animAction:null};
+state.keySelects=new Map();state.keySel=null;state.v1Op=1;
+function status(el,msg,kind=''){el.textContent=msg;el.className='status '+kind}
+function basename(s){return s.split(/[\\/]/).pop().replace(/\.[^.]+$/,'')}
+function safe(s){return (s||'').replace(/[^a-zA-Z0-9_]/g,'_').slice(0,48)||'material'}
+function readText(file){return file.text()}
+function parseSMD(text,name='model.smd'){
+ const lines=text.replace(/\r/g,'').split('\n');const nodes=[],frames=[],triangles=[];let section='',frame=null,tri=null;
+ for(let i=0;i<lines.length;i++){const raw=lines[i].trim();if(!raw)continue;
+  if(raw==='nodes'){section='nodes';continue}if(raw==='skeleton'){section='skeleton';continue}if(raw==='triangles'){section='triangles';continue}if(raw==='end'){if(section==='triangles')section='';else if(section==='nodes')section='';else if(section==='skeleton'){if(frame)frames.push(frame);frame=null;section='';}continue}
+  if(section==='nodes'){const m=raw.match(/^(\d+)\s+"([^"]+)"\s+(-?\d+)/);if(m)nodes.push({id:+m[1],name:m[2],parent:+m[3]});continue}
+  if(section==='skeleton'){if(raw.startsWith('time ')){if(frame)frames.push(frame);frame={time:+raw.split(/\s+/)[1],transforms:{}};continue}
+   if(frame){const a=raw.split(/\s+/).map(Number);if(a.length>=7&&a.every(Number.isFinite))frame.transforms[a[0]]={p:new THREE.Vector3(a[1],a[2],a[3]),r:new THREE.Euler(a[4],a[5],a[6],'ZYX')};}continue}
+  if(section==='triangles'){
+   if(!tri){tri={mat:raw,verts:[]};continue}
+   const a=raw.split(/\s+/).map(Number);if(a.length>=9&&a.every(Number.isFinite)){const links=Math.max(0,Math.floor(a[9]||0)),inf=[];for(let j=0;j<links;j++){const bi=a[10+j*2],w=a[11+j*2];if(Number.isFinite(bi)&&Number.isFinite(w))inf.push({bone:bi,weight:w})}
+    tri.verts.push({bone:a[0],p:new THREE.Vector3(a[1],a[2],a[3]),n:new THREE.Vector3(a[4],a[5],a[6]),uv:[a[7],a[8]],inf});}
+   if(tri.verts.length===3){triangles.push(tri);tri=null;}
+  }
+ }
+ if(frame)frames.push(frame);
+ return {name,nodes,frames,triangles,raw:text};
+}
+function buildTarget(parsed){
+ const group=new THREE.Group();group.name='Raze target skeleton';
+ // Single sorted node order shared by bones[], byId and boneIndexById so a bone's
+ // array index always matches its SMD id position — mixing a sorted bones[] with an
+ // unsorted id map was the source of silent bone-index corruption in the old build.
+ const sorted=parsed.nodes.slice().sort((a,b)=>a.id-b.id);
+ const bones=sorted.map(n=>{const b=new THREE.Bone();b.name=n.name;b.userData.smdId=n.id;return b;});
+ const byId=new Map(sorted.map((n,i)=>[n.id,bones[i]]));
+ const boneIndexById=new Map(sorted.map((n,i)=>[n.id,i]));
+ const bind=parsed.frames[0]?.transforms||{};
+ sorted.forEach((n,i)=>{const b=bones[i],t=bind[n.id];if(t){b.position.copy(t.p);b.rotation.copy(t.r)}const parent=byId.get(n.parent);if(parent)parent.add(b);else group.add(b)});
+ group.updateMatrixWorld(true);
+ // Capture the inverse bind-pose matrices right now, from the reference SMD's own
+ // frame 0. This is the fixed basis every SkinnedMesh we build will skin against,
+ // independent of whatever pose the bones are later animated into.
+ const boneInverses=bones.map(b=>new THREE.Matrix4().copy(b.matrixWorld).invert());
+ const helper=new THREE.Group();helper.name='Target bone display';const mat=new THREE.LineBasicMaterial({color:0x75a7ff});
+ const segs=[];
+ sorted.forEach(n=>{if(n.parent>=0){const bb=byId.get(n.id),pb=byId.get(n.parent),a=bb.getWorldPosition(new THREE.Vector3()),p=pb.getWorldPosition(new THREE.Vector3());const g=new THREE.BufferGeometry().setFromPoints([p,a]);helper.add(new THREE.Line(g,mat));const s=new THREE.Mesh(new THREE.SphereGeometry(.28,8,6),new THREE.MeshBasicMaterial({color:0x9cc2ff}));s.position.copy(a);s.userData.kind='ball';const c=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,6,1),new THREE.MeshBasicMaterial({color:0x39ff88}));c.userData.kind='stick';helper.add(s);helper.add(c);segs.push({g,s,c,bb,pb})}});
+ const tv=new THREE.Vector3(),tv2=new THREE.Vector3(),dirV=new THREE.Vector3(),upV=new THREE.Vector3(0,1,0);
+ const updateHelper=()=>{for(const q of segs){q.bb.getWorldPosition(tv);q.pb.getWorldPosition(tv2);const pa=q.g.attributes.position;pa.setXYZ(0,tv2.x,tv2.y,tv2.z);pa.setXYZ(1,tv.x,tv.y,tv.z);pa.needsUpdate=true;q.g.computeBoundingSphere();q.s.position.copy(tv);const c=q.c,th=(state.style&&state.style.thick)||.35;c.position.copy(tv).add(tv2).multiplyScalar(.5);dirV.copy(tv).sub(tv2);const len=dirV.length();if(len>1e-6){c.visible=true;c.quaternion.setFromUnitVectors(upV,dirV.multiplyScalar(1/len));c.scale.set(th,len,th)}else c.visible=false}};
+ group.add(helper);
+ // bindLocal = the (editable) bind-pose local positions; refLocal = the untouched originals from the SMD.
+ const bindLocal=new Map(),refLocal=new Map();sorted.forEach(n=>{const t=bind[n.id];if(t){bindLocal.set(n.id,t.p.clone());refLocal.set(n.id,t.p.clone())}});
+ return {parsed,group,bones,byId,boneIndexById,boneInverses,helper,updateHelper,bindLocal,refLocal};
+}
+function setup3D(){
+ const host=$('viewport');const scene=new THREE.Scene();scene.background=new THREE.Color(0x0c111a);
+ const camera=new THREE.PerspectiveCamera(45,host.clientWidth/host.clientHeight,.1,5000);camera.position.set(80,-120,90);
+ const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(host.clientWidth,host.clientHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0xffffff,0x273344,2));const light=new THREE.DirectionalLight(0xffffff,2.4);light.position.set(80,-60,120);scene.add(light);
+ const grid=new THREE.GridHelper(200,40,0x35445a,0x202c3d);grid.rotation.x=Math.PI/2;scene.add(grid);
+ camera.up.set(0,0,1);
+ const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,0,40);
+ const tc=new TransformControls(camera,renderer.domElement);tc.setMode('translate');tc.setSpace('world');tc.setSize(.9);scene.add(tc);
+ tc.addEventListener('dragging-changed',e=>{controls.enabled=!e.value});
+ tc.addEventListener('objectChange',()=>onGizmoChange());
+ tc.addEventListener('mouseDown',()=>pushUndo());
+ state.tc=tc;
+ state.scene=scene;state.camera=camera;state.renderer=renderer;state.controls=controls;
+ const resize=()=>{const w=host.clientWidth,h=host.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h)};new ResizeObserver(resize).observe(host);
+ function loop(){requestAnimationFrame(loop);controls.update();if(state.target?.updateHelper){state.target.group.updateMatrixWorld(true);state.target.updateHelper()}renderer.render(scene,camera)}loop();
+ $('engineState').textContent='3D engine ready';
+}
+setup3D();
+function disposeGroup(g){if(!g)return;state.scene.remove(g);g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose())}})}
+function axisTransform(v,mode=$('axis').value){if(mode==='yup')return new THREE.Vector3(v.x,-v.z,v.y);if(mode==='zup')return new THREE.Vector3(v.x,v.z,-v.y);return v.clone()}
+function axisInto(v,mode){const x=v.x,y=v.y,z=v.z;if(mode==='yup')v.set(x,-z,y);else if(mode==='zup')v.set(x,z,-y);return v}
+function alignKey(){return [$('scale').value,$('rot').value,$('ox').value,$('oy').value,$('oz').value,$('axis').value].join('|')}
+function applyAlignment(){
+ const s=Number($('scale').value)||1,rz=(Number($('rot').value)||0)*Math.PI/180,off=new THREE.Vector3(+$('ox').value||0,+$('oy').value||0,+$('oz').value||0);
+ if(state.modelGroup){const m=$('axis').value,qx=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),m==='yup'?Math.PI/2:m==='zup'?-Math.PI/2:0),qz=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),rz);
+  state.modelGroup.scale.setScalar(s);state.modelGroup.quaternion.copy(qz.multiply(qx));state.modelGroup.position.copy(off)}
+ if(state.ghost)state.ghost.visible=$('ghostRef').checked;
+ if(state.reskinnedGroup&&state.baked&&alignKey()!==state.bakedKey)status($('weightStatus'),'Alignment changed since weights were calculated — the live mesh is still baked with the old alignment. Press Calculate weight transfer again.','warn');
+ updateVisibility();
+}
+function updateVisibility(){
+ const m=$('displayMode').value,showMesh=m!=='skeleton';
+ if(state.reskinnedGroup){state.reskinnedGroup.visible=showMesh;if(state.modelGroup)state.modelGroup.visible=false}
+ else if(state.modelGroup)state.modelGroup.visible=showMesh;
+ if(state.targetGroup)state.targetGroup.visible=m!=='character';
+}
+function trimBox(pts,lo=.005){
+ const b=new THREE.Box3();if(!pts.length)return b;
+ for(const ax of ['x','y','z']){const a=pts.map(p=>p[ax]).sort((m,n)=>m-n);b.min[ax]=a[Math.floor(a.length*lo)];b.max[ax]=a[Math.min(a.length-1,Math.ceil(a.length*(1-lo))-1)]}
+ return b;
+}
+function meshToRaw(mesh){// mesh local -> GLB's own space, i.e. WITHOUT the viewer alignment group's scale/rotation/offset
+ if(state.modelGroup)state.modelGroup.updateMatrixWorld(true);mesh.updateMatrixWorld(true);
+ const inv=state.modelGroup?new THREE.Matrix4().copy(state.modelGroup.matrixWorld).invert():new THREE.Matrix4();
+ return new THREE.Matrix4().multiplyMatrices(inv,mesh.matrixWorld);
+}
+function targetBox(){
+ if(!state.target)return null;const pts=[];
+ const all=state.target.parsed.triangles.flatMap(t=>t.verts),step=Math.max(1,Math.floor(all.length/6000));
+ for(let i=0;i<all.length;i+=step)pts.push(all[i].p);
+ if(!pts.length){state.target.group.updateMatrixWorld(true);state.target.bones.forEach(x=>pts.push(x.getWorldPosition(new THREE.Vector3())))}
+ return pts.length?trimBox(pts):null;
+}
+function setView(name){
+ const b=targetBox(),c=b?b.getCenter(new THREE.Vector3()):new THREE.Vector3(0,0,40),size=b?b.getSize(new THREE.Vector3()):new THREE.Vector3(30,30,80),cam=state.camera;
+ cam.fov=name==='persp'?45:12;cam.updateProjectionMatrix();// narrow FOV = nearly flat (orthographic-like) view, easier for aligning
+ const r=Math.max(size.length()/2,10),dist=r/Math.sin(cam.fov*Math.PI/360)*(name==='persp'?1.1:1);
+ const dirs={front:[0,-1,0],back:[0,1,0],left:[-1,0,0],right:[1,0,0],top:[0,-.001,1],persp:[.55,-.8,.35]};
+ const d=new THREE.Vector3(...dirs[name]).normalize();
+ state.controls.target.copy(c);cam.position.copy(c).addScaledVector(d,dist);cam.far=Math.max(5000,dist*4);cam.updateProjectionMatrix();state.controls.update();
+}
+function centerView(){
+ state.camera.fov=45;state.camera.updateProjectionMatrix();
+ const b=targetBox();
+ if(b){const c=b.getCenter(new THREE.Vector3()),h=Math.max(b.getSize(new THREE.Vector3()).length(),10);state.controls.target.copy(c);state.camera.position.set(c.x+h*.8,c.y-h*1.2,c.z+h*.5);state.camera.far=Math.max(5000,h*50);state.camera.updateProjectionMatrix()}
+ else{state.controls.target.set(0,0,40);state.camera.position.set(80,-120,90)}
+ state.controls.update();
+}
+// Measures the GLB in world space, picks Y-up vs Z-up, then scales/offsets it to the
+// height and position of Raze's body so the character lands on the skeleton.
+function autoFit(){
+ const tb=targetBox();if(!tb||!state.meshes.length)return status($('fileStatus'),'Load both the GLB and the Raze reference SMD first.','warn');
+ const pts=[];
+ for(const mesh of state.meshes){const pos=mesh.geometry?.attributes.position;if(!pos)continue;const rel=meshToRaw(mesh),step=Math.max(1,Math.floor(pos.count/4000));
+  for(let i=0;i<pos.count;i+=step){const v=new THREE.Vector3();if(mesh.isSkinnedMesh)mesh.getVertexPosition(i,v);else v.fromBufferAttribute(pos,i);pts.push(v.applyMatrix4(rel))}}
+ if(!pts.length)return;
+ const raw=trimBox(pts),rs=raw.getSize(new THREE.Vector3());
+ $('axis').value=rs.y>rs.z*1.2?'yup':'keep';$('rot').value=0;
+ const g=trimBox(pts.map(p=>axisTransform(p))),gs=g.getSize(new THREE.Vector3()),gc=g.getCenter(new THREE.Vector3());
+ const ts=tb.getSize(new THREE.Vector3()),tc=tb.getCenter(new THREE.Vector3());
+ const sc=gs.z>0?ts.z/gs.z:1,r4=n=>Math.round(n*1e4)/1e4;
+ $('scale').value=r4(sc);$('ox').value=r4(tc.x-gc.x*sc);$('oy').value=r4(tc.y-gc.y*sc);$('oz').value=r4(tb.min.z-g.min.z*sc);
+ applyAlignment();centerView();
+ status($('fileStatus'),`Auto-fit: axis ${$('axis').value==='yup'?'Y-up → Z-up':'keep'}, scale ${$('scale').value} (GLB height ${gs.z.toFixed(2)} → Raze height ${ts.z.toFixed(1)}; GLB raw size ${rs.x.toFixed(1)}×${rs.y.toFixed(1)}×${rs.z.toFixed(1)}). If Clove faces the wrong way, set Rotation Z to 90, 180 or -90 and press Apply.`,'ok');
+}
+function buildGhost(parsed,group){
+ const pos=[],si=[],sw=[],T=state.target;
+ for(const t of parsed.triangles)for(const v of t.verts){
+  pos.push(v.p.x,v.p.y,v.p.z);
+  const inf=(v.inf&&v.inf.length?v.inf:[{bone:v.bone,weight:1}]).slice().sort((a,b)=>b.weight-a.weight).slice(0,4);
+  const sum=inf.reduce((a,b)=>a+b.weight,0)||1;
+  for(let k=0;k<4;k++){const it=inf[k];si.push(it?(T.boneIndexById.get(it.bone)||0):0);sw.push(it?it.weight/sum:0)}
+ }
+ if(!pos.length)return null;
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+ g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));
+ const m=new THREE.SkinnedMesh(g,new THREE.MeshBasicMaterial({color:0x4a7fb5,wireframe:true,transparent:true,opacity:.16,depthWrite:false}));
+ m.name='Raze ghost';m.frustumCulled=false;
+ // Own copy of the skeleton (original Raze bind positions), so the reference never follows Clove's edits or animation corrections.
+ if(state.ghostRig&&state.ghostRig.group.parent)state.ghostRig.group.parent.remove(state.ghostRig.group);
+ const sorted=T.parsed.nodes.slice().sort((a,b)=>a.id-b.id),fr0=T.parsed.frames[0]?.transforms||{},rigGroup=new THREE.Group();rigGroup.name='Raze reference rig';
+ const gb=sorted.map(n=>{const b=new THREE.Bone();b.name=n.name;return b}),gById=new Map(sorted.map((n,i)=>[n.id,gb[i]]));
+ sorted.forEach((n,i)=>{const t=fr0[n.id];if(t){gb[i].position.copy(t.p);gb[i].rotation.copy(t.r)}const par=gById.get(n.parent);if(par)par.add(gb[i]);else rigGroup.add(gb[i])});
+ group.add(rigGroup);rigGroup.updateMatrixWorld(true);
+ const ginv=gb.map(b=>new THREE.Matrix4().copy(b.matrixWorld).invert());
+ state.ghostRig={group:rigGroup,sorted,byId:gById};
+ m.bind(new THREE.Skeleton(gb,ginv),new THREE.Matrix4());group.add(m);return m;
+}
+function ghostPose(fr){
+ const G=state.ghostRig;if(!G||!fr)return;
+ for(const n of G.sorted){const b=G.byId.get(n.id),tr=fr.transforms[n.id];if(tr){b.position.copy(tr.p);b.rotation.copy(tr.r)}}
+ G.group.updateMatrixWorld(true);
+}
+// ----- temporary frozen copy of the Raze reference (separate from everything else) -----
+function unsnapRef(){
+ if(state.snap){state.scene.remove(state.snap);state.snap.geometry.dispose();state.snap.material.dispose();state.snap=null}
+}
+function snapRef(){
+ const m=state.ghost,G=state.ghostRig;if(!m||!G)return status($('animStatus'),'Load the Raze reference SMD (with its body parts) first.','warn');
+ unsnapRef();G.group.updateMatrixWorld(true);
+ const n=m.geometry.attributes.position.count,arr=new Float32Array(n*3),v=new THREE.Vector3();
+ for(let i=0;i<n;i++){m.getVertexPosition(i,v);arr[i*3]=v.x;arr[i*3+1]=v.y;arr[i*3+2]=v.z}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(arr,3));
+ const sm=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0xffa94d,wireframe:true,transparent:true,opacity:.4,depthWrite:false}));
+ sm.name='Raze reference snapshot';sm.frustumCulled=false;state.scene.add(sm);state.snap=sm;
+ const c=state.playCtx;status($('animStatus'),`Snapshot taken${c?` at frame ${c.idx} of ${c.frames.length-1}`:' (rest pose)'} — orange wireframe. It stays until you press Remove snapshot; nothing else is changed.`,'ok');
+}
+async function loadGLB(file){
+ status($('fileStatus'),'Loading GLB…');
+ const buf=await file.arrayBuffer();const loader=new GLTFLoader();
+ await new Promise((resolve,reject)=>loader.parse(buf,'',g=>{state.gltf=g;state.root=g.scene;resolve()},reject));
+ if(state.modelGroup)disposeGroup(state.modelGroup);
+ disposeReskin();state.weights.clear();
+ state.modelGroup=new THREE.Group();state.modelGroup.name='Character GLB';state.modelGroup.add(state.root);state.scene.add(state.modelGroup);
+ state.meshes=[];state.sourceBones=[];
+ state.root.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){state.meshes.push(o);if(o.isSkinnedMesh&&o.skeleton)o.skeleton.bones.forEach(b=>{if(!state.sourceBones.includes(b))state.sourceBones.push(b)})}});
+ $('meshCount').textContent=state.meshes.length;$('glbBones').textContent=state.sourceBones.length;v2.root=null;if(v2.on)v2Build();applyEditorView(editorActive);state.matTex=new Map();autoMatchTextures();renderMats();
+ applyAlignment();status($('fileStatus'),`Loaded ${file.name}: ${state.meshes.length} mesh(es), ${state.sourceBones.length} unique skinned joints.`,'ok');
+ $('viewOverlay').textContent=`Character loaded: ${file.name}. Add Raze reference SMD.`;
+ if(state.target)autoFit();
+}
+async function loadReference(files){
+ files=Array.isArray(files)?files:[files];const file=files[0];
+ const all=[];for(const f of files)all.push(parseSMD(await readText(f),f.name));
+ const p=all.find(x=>x.nodes.length&&x.frames.length);if(!p)throw Error('SMD has no readable nodes/skeleton section.');
+ for(const o of all)if(o!==p)for(const t of o.triangles)p.triangles.push(t);
+ state.donorNames=new Set(files.map(f=>f.name.toLowerCase()));
+ unsnapRef();if(state.targetGroup)disposeGroup(state.targetGroup);disposeReskin();state.weights.clear();
+ state.target=buildTarget(p);state.targetFileName=file.name;state.targetGroup=state.target.group;state.scene.add(state.targetGroup);
+ state.ghost=buildGhost(p,state.targetGroup);$('targetBones').textContent=p.nodes.length;resetEditorState();renderMapping();updateVisibility();applyAlignment();status($('fileStatus'),`Reference loaded: ${p.nodes.length} bones in ${file.name}.`,'ok');
+ $('viewOverlay').textContent=`Target skeleton loaded: ${p.nodes.length} bones.`;
+ if(state.meshes.length)autoFit();else centerView();
+}
+function canon(n){return n.toLowerCase().replace(/mixamorig[:_ .-]?/g,'').replace(/bip01[ _.-]?/g,'').replace(/[^a-z0-9]/g,'')}
+state.key={};
+state.style={color:'#39ff88',opacity:1,ball:2.5,thick:.35,ghost:.2};
+const SKIP=/twist|twst|ndl|needle|roll|helper|pole|corrective|jiggle|nub|tip|offset|attach|weapon|prop|cloth|hair|face|jaw|eye|brow|lip|tongue|cheek|thumb|index|middle|ring|pinky|finger|metacarpal|palm|cape|skirt|pouch|strap/;
+function describeBone(name){
+ const toks=name.replace(/([a-z])([A-Z])/g,'$1 $2').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+ let side='';if(toks.includes('l')||toks.includes('left'))side='l';else if(toks.includes('r')||toks.includes('right'))side='r';
+ const core=toks.filter(t=>!['l','r','left','right','mixamorig','bip','biped'].includes(t)&&!/^bip\d+$/.test(t)).join('');
+ const skip=SKIP.test(core)||toks.includes('ik')||toks.includes('end');
+ let part='';
+ if(/clavicle|collar|shoulder/.test(core))part='clavicle';
+ else if(/forearm|lowerarm|armlower|elbow/.test(core))part='forearm';
+ else if(/upperarm|uparm|armupper/.test(core)||/^arm\d*$/.test(core))part='upperarm';
+ else if(/hand|wrist/.test(core))part='hand';
+ else if(/thigh|upleg|upperleg|legupper/.test(core))part='thigh';
+ else if(/calf|lowerleg|shin|leglower/.test(core)||/^leg\d*$/.test(core))part='calf';
+ else if(/foot|ankle/.test(core))part='foot';
+ else if(/toe/.test(core))part='toe';
+ else if(/neck/.test(core))part='neck';
+ else if(/^head\d*$/.test(core))part='head';
+ else if(/spine|chest|torso|abdomen/.test(core))part='spine';
+ else if(/pelvis|^hips?\d*$/.test(core))part='pelvis';
+ return {side,part,skip};
+}
+function boneDepth(b){let d=0;while(b.parent){d++;b=b.parent}return d}
+function resolveTarget(b){let x=b;while(x&&x.isBone){const t=state.mapping[x.name];if(t)return t;x=x.parent}return null}
+function autoMap(quiet){
+ if(!state.target||!state.sourceBones.length)return quiet?0:status($('fileStatus'),'Load both the GLB and target SMD first.','warn');
+ state.mapping={};state.key={};const nodes=state.target.parsed.nodes;
+ const S=state.sourceBones.map(b=>({b,d:describeBone(b.name),depth:boneDepth(b)})).filter(x=>x.d.part&&!x.d.skip);
+ const best=c=>c.slice().sort((x,y)=>x.depth-y.depth||x.b.name.length-y.b.name.length)[0];
+ const setKey=(t,x)=>{state.key[t.name]=x.b.name;state.mapping[x.b.name]=t.name};
+ const T=nodes.map(n=>({n,d:describeBone(n.name)})).filter(t=>t.d.part);
+ for(const t of T){if(t.d.part==='spine')continue;const c=S.filter(x=>x.d.part===t.d.part&&x.d.side===t.d.side);if(c.length)setKey(t.n,best(c))}
+ const ts=T.filter(t=>t.d.part==='spine').sort((x,y)=>x.n.id-y.n.id),ss=S.filter(x=>x.d.part==='spine').sort((x,y)=>x.depth-y.depth||x.b.name.length-y.b.name.length);
+ if(ss.length)ts.forEach((t,k)=>setKey(t.n,ss[ts.length>1?Math.round(k*(ss.length-1)/(ts.length-1)):0]));
+ const tc=new Map(nodes.map(n=>[canon(n.name),n]));
+ state.sourceBones.forEach(sb=>{const c=canon(sb.name);if(c&&!state.mapping[sb.name]&&tc.has(c))state.mapping[sb.name]=tc.get(c).name});
+ renderMapping();
+ const nk=Object.keys(state.key).length,missing=T.filter(t=>!state.key[t.n.name]).map(t=>t.n.name);
+ if(!quiet)status($('fileStatus'),`Auto-mapped ${nk} key joints.${missing.length?' No match found for: '+missing.join(', ')+' — pick them manually in Key joints.':' All key joints found — still check the limbs.'}`,missing.length?'warn':'ok');
+ return nk;
+}
+function hideSrcMarker(){if(state.rzMarker)state.rzMarker.visible=false}
+function setRazeMarker(rname){
+ const T=state.target;if(!T||!state.scene)return;
+ if(!state.rzMarker){const m=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),new THREE.MeshBasicMaterial({color:0xffaa33,depthTest:false,transparent:true,opacity:.95}));m.renderOrder=60;state.scene.add(m);state.rzMarker=m}
+ const n=T.parsed.nodes.find(x=>x.name===rname),b=n&&T.byId.get(n.id);
+ if(!b){state.rzMarker.visible=false;return}
+ T.group.updateMatrixWorld(true);state.rzMarker.position.copy(b.getWorldPosition(new THREE.Vector3()));state.rzMarker.scale.setScalar(1.8);state.rzMarker.visible=true;
+}
+function showSrcMarker(name){v2.hi=name||null;v2.pick=null;if(!v2.on)v2Set(true);else v2Refresh()}
+function selectKeyRow(rname){
+ state.keySel=rname;v2.pick=null;v2.hi=state.key[rname]||null;setRazeMarker(rname);
+ document.querySelectorAll('#keyList .listrow').forEach(r=>{r.style.outline=r.dataset.k===rname?'2px solid #ff00ff':''});
+ if(!v2.on)v2Set(true);else v2Refresh();
+}
+// ===== Second viewer: Clove's own skeleton, side by side with the main viewer =====
+function v2Set(on){
+ v2.on=on;document.body.classList.toggle('v2on',on);
+ $('v2Toggle').textContent=on?'Hide Clove bones viewer':'Show Clove bones viewer (side by side)';
+ if(on){v2Init();v2Build()}
+}
+function v2Init(){
+ if(v2.ren)return;
+ const host=$('v2canvas');
+ v2.scene=new THREE.Scene();v2.scene.background=new THREE.Color(0x0c111a);
+ v2.cam=new THREE.PerspectiveCamera(45,1,.01,5000);v2.cam.up.set(0,0,1);
+ v2.ren=new THREE.WebGLRenderer({antialias:true});v2.ren.setPixelRatio(Math.min(devicePixelRatio,2));host.appendChild(v2.ren.domElement);
+ v2.ctl=new OrbitControls(v2.cam,v2.ren.domElement);v2.ctl.enableDamping=true;
+ v2.lines=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0x7fd1ff,depthTest:false,transparent:true,opacity:.85}));v2.lines.renderOrder=4;v2.lines.frustumCulled=false;v2.scene.add(v2.lines);
+ const resize=()=>{const w=host.clientWidth,h=host.clientHeight;if(w<2||h<2)return;v2.cam.aspect=w/h;v2.cam.updateProjectionMatrix();v2.ren.setSize(w,h)};
+ new ResizeObserver(resize).observe(host);
+ const loop=()=>{requestAnimationFrame(loop);if(!v2.on||host.clientWidth<2)return;v2.ctl.update();v2.ren.render(v2.scene,v2.cam)};loop();
+ const el=v2.ren.domElement;let down=null;
+ el.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY}});
+ el.addEventListener('pointerup',e=>{if(!down)return;const mv=Math.hypot(e.clientX-down.x,e.clientY-down.y);down=null;if(mv<8)v2Tap(e.clientX,e.clientY)});
+}
+function v2Build(){
+ if(!v2.ren)return;
+ if(v2.group&&v2.root===state.root&&v2.axis===$('axis').value){v2Refresh();return}
+ if(v2.group){v2.scene.remove(v2.group);v2.group.traverse(o=>{if(o.userData.own&&o.geometry)o.geometry.dispose()})}
+ v2.group=null;v2.balls=[];v2.root=state.root;v2.axis=$('axis').value;
+ if(!state.root||!state.sourceBones.length){v2Refresh();return}
+ const axis=v2.axis,g=new THREE.Group(),p=new THREE.Vector3();
+ state.modelGroup.updateMatrixWorld(true);state.root.updateMatrixWorld(true);
+ const inv=new THREE.Matrix4().copy(state.modelGroup.matrixWorld).invert();
+ const wmat=new THREE.MeshBasicMaterial({color:0x5a8fd6,wireframe:true,transparent:true,opacity:v2.bodyOp,depthWrite:false});v2.wmat=wmat;
+ for(const mesh of state.meshes){
+  const geo=mesh.geometry,pa=geo&&geo.attributes.position;if(!pa)continue;
+  const rel=meshToRaw(mesh),arr=new Float32Array(pa.count*3);
+  for(let i=0;i<pa.count;i++){if(mesh.isSkinnedMesh)mesh.getVertexPosition(i,p);else p.fromBufferAttribute(pa,i);p.applyMatrix4(rel);axisInto(p,axis);arr[i*3]=p.x;arr[i*3+1]=p.y;arr[i*3+2]=p.z}
+  const ng=new THREE.BufferGeometry();ng.setAttribute('position',new THREE.BufferAttribute(arr,3));if(geo.index)ng.setIndex(geo.index);
+  const m=new THREE.Mesh(ng,wmat);m.frustumCulled=false;m.userData.own=true;g.add(m);
+ }
+ const box=new THREE.Box3(),sph=new THREE.SphereGeometry(1,12,8),idx=new Map(state.sourceBones.map((b,i)=>[b,i]));
+ for(const sb of state.sourceBones){
+  sb.getWorldPosition(p).applyMatrix4(inv);axisInto(p,axis);box.expandByPoint(p);
+  const d=describeBone(sb.name);let a=sb.parent;while(a&&!idx.has(a))a=a.parent;
+  const m=new THREE.Mesh(sph,new THREE.MeshBasicMaterial({depthTest:false,transparent:true}));m.renderOrder=5;m.position.copy(p);g.add(m);
+  v2.balls.push({name:sb.name,mesh:m,cand:!!d.part&&!d.skip,pos:p.clone(),parentIdx:a?idx.get(a):-1});
+ }
+ const sz=box.getSize(new THREE.Vector3());v2.size=Math.max(sz.x,sz.y,sz.z)||1;v2.center=box.getCenter(new THREE.Vector3());
+ v2.scene.add(g);v2.group=g;v2.cam.near=v2.size*.01;v2.cam.far=v2.size*40;v2.cam.updateProjectionMatrix();
+ v2View('front');v2Refresh();
+}
+function v2View(kind){
+ if(!v2.center)return;const c=v2.center,d=v2.size*1.6;
+ if(kind==='side')v2.cam.position.set(c.x+d,c.y,c.z);else v2.cam.position.set(c.x,c.y-d,c.z);
+ v2.ctl.target.copy(c);v2.ctl.update();
+}
+function v2Refresh(){
+ if(!v2.ren)return;
+ if(!v2.group){v2Info();return}
+ const mapped=new Set(Object.values(state.key)),r=v2.size*.011,pts=[];
+ const vis=v2.balls.map(b=>v2.all||b.cand||mapped.has(b.name)||b.name===v2.hi||b.name===v2.pick);
+ v2.balls.forEach((b,i)=>{const hi=b.name===v2.hi,pk=b.name===v2.pick;b.mesh.visible=vis[i];
+  b.mesh.material.color.set(pk?0xffe14d:hi?0xff00ff:mapped.has(b.name)?0x55d6a0:b.cand?0x67d4ff:0x8a97a8);
+  b.mesh.scale.setScalar(r*(pk||hi?2.2:1))});
+ v2.balls.forEach((b,i)=>{if(!vis[i])return;let j=b.parentIdx;while(j>=0&&!vis[j])j=v2.balls[j].parentIdx;if(j>=0)pts.push(v2.balls[j].pos,b.pos)});
+ v2.lines.geometry.setFromPoints(pts);
+ v2Info();
+}
+function v2Tap(cx,cy){
+ if(!v2.group)return;
+ const rc=v2.ren.domElement.getBoundingClientRect(),v=new THREE.Vector3();let best=null,bd=34;
+ for(const b of v2.balls){if(!b.mesh.visible)continue;v.copy(b.pos).project(v2.cam);const sx=rc.left+(v.x+1)/2*rc.width,sy=rc.top+(1-v.y)/2*rc.height,d=Math.hypot(sx-cx,sy-cy);if(v.z<1&&d<bd){bd=d;best=b}}
+ if(best){v2.pick=best.name;v2Refresh()}
+}
+function v2Info(){
+ const el=$('v2Info');if(!el)return;
+ const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),row=state.keySel;let h='';
+ if(!state.root)h='Load the GLB first.';
+ else{
+  h=row?`Raze bone: <b>${esc(row)}</b> (orange ball, left view)`:'Tap a Raze bone name in the Key joints list.';
+  if(v2.pick)h+=`<br>Tapped Clove bone: <b>${esc(v2.pick)}</b>`+(row?` <button id="v2Use">Use it</button>`:'');
+  else if(row)h+=`<br>`+(state.key[row]?`Mapped to: <b>${esc(state.key[row])}</b> (pink)`:'Not mapped yet. Tap a ball here.');
+ }
+ el.innerHTML=h;const u=$('v2Use');if(u)u.onclick=v2Use;
+}
+function v2Use(){
+ const row=state.keySel,sel=state.keySelects.get(row),pk=v2.pick;if(!row||!sel||!pk)return;
+ sel.value=pk;sel.dispatchEvent(new Event('change'));v2.pick=null;v2Refresh();
+}
+
+// ===== Searchable joint picker (replaces the long native dropdowns in Key joints / All joints) =====
+const HELPER_RX=/twst|twist|ndl|needle|helper|corrective|ikpv|iue|(^|[_\s.-])ik([_\s.-]|$)|jacket|buckle|strap|pouch/i;
+let pkOpen=null;
+function closePicker(){if(pkOpen){pkOpen.remove();pkOpen=null}}
+function openPicker(sel,hideable){
+ closePicker();
+ const opts=[...sel.options].map(o=>({v:o.value,t:o.textContent})),cur=sel.value;
+ const ov=document.createElement('div');ov.className='pkov';
+ const box=document.createElement('div');box.className='pkbox';
+ const top=document.createElement('div');top.className='pktop';
+ const inp=document.createElement('input');inp.type='search';inp.placeholder='Search joints… (e.g. r elbow)';inp.autocomplete='off';inp.autocapitalize='off';inp.spellcheck=false;
+ const x=document.createElement('button');x.type='button';x.className='pkx';x.textContent='✕';
+ top.append(inp,x);box.append(top);
+ let cb=null;
+ if(hideable){const lb=document.createElement('label');lb.className='check pkchk';cb=document.createElement('input');cb.type='checkbox';cb.checked=state.pkHide!==false;lb.append(cb,' Hide twist / IK / helper joints');box.append(lb)}
+ const info=document.createElement('div');info.className='pkinfo';box.append(info);
+ const list=document.createElement('div');list.className='pklist';box.append(list);
+ ov.append(box);document.body.append(ov);pkOpen=ov;
+ const norm=t=>t.toLowerCase().replace(/[_\-.]+/g,' ');
+ const choose=v=>{closePicker();sel.value=v;sel.dispatchEvent(new Event('change',{bubbles:true}))};
+ const render=()=>{
+  const toks=norm(inp.value).split(/\s+/).filter(Boolean),hide=!!(cb&&cb.checked);let hidden=0;
+  let rows=opts.filter(o=>{
+   if(!o.v)return !toks.length;
+   const n=norm(o.t);if(!toks.every(k=>n.includes(k)))return false;
+   if(hide&&o.v!==cur&&HELPER_RX.test(o.t)){hidden++;return false}
+   return true;
+  });
+  if(toks.length)rows.sort((a,b)=>a.t.length-b.t.length);
+  list.innerHTML='';
+  for(const o of rows.slice(0,400)){const b=document.createElement('button');b.type='button';b.className='pkitem'+(o.v===cur?' sel':'');b.textContent=o.t;b.onclick=()=>choose(o.v);list.append(b)}
+  info.textContent=`${rows.filter(o=>o.v).length} of ${opts.filter(o=>o.v).length} joints`+(hidden?` · ${hidden} helper joint(s) hidden`:'');
+ };
+ inp.addEventListener('input',render);if(cb)cb.addEventListener('change',()=>{state.pkHide=cb.checked;render()});
+ x.onclick=closePicker;ov.addEventListener('click',e=>{if(e.target===ov)closePicker()});
+ inp.addEventListener('keydown',e=>{if(e.key==='Escape')closePicker();if(e.key==='Enter'){const f=list.querySelector('.pkitem:not(.sel)')||list.querySelector('.pkitem');if(f&&inp.value)f.click()}});
+ render();setTimeout(()=>{inp.focus();const s=list.querySelector('.sel');if(s&&!inp.value)s.scrollIntoView({block:'center'})},60);
+}
+function enhanceSelects(host,hideable){
+ const d=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+ host.querySelectorAll('select').forEach(sel=>{
+  if(sel._enh)return;sel._enh=true;
+  const btn=document.createElement('button');btn.type='button';btn.className='pickbtn';
+  const lab=document.createElement('span'),ar=document.createElement('b');ar.textContent='▾';btn.append(lab,ar);
+  const refresh=()=>{const o=sel.options[sel.selectedIndex];lab.textContent=o?o.textContent:''};
+  Object.defineProperty(sel,'value',{configurable:true,get(){return d.get.call(sel)},set(v){d.set.call(sel,v);refresh()}});
+  sel.addEventListener('change',refresh);
+  sel.style.display='none';sel.after(btn);refresh();
+  btn.onclick=()=>{sel.dispatchEvent(new Event('focus'));openPicker(sel,hideable)};
+ });
+}
+function renderKeys(){
+ const kh=$('keyList');kh.innerHTML='';state.keySelects=new Map();
+ if(!state.sourceBones.length||!state.target){kh.innerHTML='<div class="listrow"><span class="muted">Load both files to show key joints.</span></div>';return}
+ const esc=t=>t.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+ const opts=state.sourceBones.map(b=>`<option value="${esc(b.name)}">${esc(b.name)}</option>`).join('');
+ state.target.parsed.nodes.forEach(n=>{const row=document.createElement('div');row.className='listrow';row.dataset.k=n.name;if(state.keySel===n.name)row.style.outline='2px solid #ff00ff';const nm=document.createElement('span');nm.textContent=n.name;nm.style.cursor='pointer';nm.onclick=()=>selectKeyRow(n.name);const sel=document.createElement('select');sel.innerHTML='<option value="">— none —</option>'+opts;sel.value=state.key[n.name]||'';state.keySelects.set(n.name,sel);sel.addEventListener('focus',()=>selectKeyRow(n.name));
+  sel.addEventListener('change',()=>{showSrcMarker(sel.value);const old=state.key[n.name];if(old&&state.mapping[old]===n.name)delete state.mapping[old];if(sel.value){state.key[n.name]=sel.value;state.mapping[sel.value]=n.name}else delete state.key[n.name];renderMapList();checkStale()});
+  row.append(nm,sel);kh.append(row)});enhanceSelects(kh,true);if(v2.on)v2Refresh();
+}
+function renderMapList(){
+ const host=$('mappingList');host.innerHTML='';
+ if(!state.sourceBones.length||!state.target){host.innerHTML='<div class="listrow"><span class="muted">Load both files to show mapping.</span></div>';return}
+ const opts=state.target.parsed.nodes.map(n=>`<option value="${n.name.replace(/"/g,'&quot;')}">${n.name}</option>`).join('');
+ state.sourceBones.forEach(b=>{const row=document.createElement('div');row.className='listrow';const name=document.createElement('span');name.textContent=b.name;name.style.cursor='pointer';name.onclick=()=>showSrcMarker(b.name);const sel=document.createElement('select');sel.innerHTML='<option value="">— unmapped (inherits parent) —</option>'+opts;sel.value=state.mapping[b.name]||'';
+  sel.addEventListener('change',()=>{const old=state.mapping[b.name];if(old&&state.key[old]===b.name)delete state.key[old];if(sel.value){state.mapping[b.name]=sel.value;if(!state.key[sel.value])state.key[sel.value]=b.name}else delete state.mapping[b.name];renderKeys();checkStale()});
+  row.append(name,sel);host.append(row)});enhanceSelects(host,false);
+}
+function renderMapping(){renderKeys();renderMapList()}
+function resetMap(){state.mapping={};state.key={};renderMapping()}
+// Poses Clove's own skeleton so each limb bone points the same way as the matching Raze bone
+// in Raze's bind pose. Returns an object whose restore() puts Clove's original pose back.
+function poseMatchClove(){
+ const T=state.target,nodes=T.parsed.nodes,src=new Map(state.sourceBones.map(b=>[b.name,b]));
+ const bindPos=n=>new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(T.boneInverses[T.boneIndexById.get(n.id)]).invert());
+ const LIMB=new Set(['clavicle','upperarm','forearm','thigh','calf','foot']),items=[],saved=[];
+ for(const n of nodes){if(!LIMB.has(describeBone(n.name).part))continue;const sb=src.get(state.key[n.name]);if(!sb)continue;
+  const child=nodes.find(c=>c.parent===n.id&&src.get(state.key[c.name]));if(!child)continue;
+  items.push({n,child,b:sb,cb:src.get(state.key[child.name]),depth:boneDepth(sb)})}
+ items.sort((x,y)=>x.depth-y.depth);
+ state.modelGroup.updateMatrixWorld(true);
+ const q1=new THREE.Quaternion(),q2=new THREE.Quaternion(),pq=new THREE.Quaternion(),a=new THREE.Vector3(),c=new THREE.Vector3();let matched=0;
+ for(const it of items){
+  it.b.updateWorldMatrix(true,true);it.cb.updateWorldMatrix(true,false);
+  it.b.getWorldPosition(a);it.cb.getWorldPosition(c);const cur=c.sub(a),tgt=bindPos(it.child).sub(bindPos(it.n));
+  if(cur.lengthSq()<1e-12||tgt.lengthSq()<1e-12)continue;
+  saved.push([it.b,it.b.quaternion.clone()]);
+  q1.setFromUnitVectors(cur.normalize(),tgt.normalize());
+  it.b.getWorldQuaternion(q2);q2.premultiply(q1);
+  pq.identity();if(it.b.parent)it.b.parent.getWorldQuaternion(pq);
+  it.b.quaternion.copy(pq.invert().multiply(q2));
+  it.b.updateWorldMatrix(false,true);matched++;
+ }
+ return {matched,restore(){for(let i=saved.length-1;i>=0;i--)saved[i][0].quaternion.copy(saved[i][1]);state.root.updateMatrixWorld(true)}};
+}
+const _sm=new THREE.Matrix4(),_sn=new THREE.Vector3(),_sacc=new THREE.Vector3(),_st=new THREE.Vector3(),_si=new THREE.Vector4(),_sw=new THREE.Vector4();
+function skinnedNormal(mesh,i,v){// in-place: applies the mesh's current skinning to a normal
+ const g=mesh.geometry,sk=mesh.skeleton;_si.fromBufferAttribute(g.attributes.skinIndex,i);_sw.fromBufferAttribute(g.attributes.skinWeight,i);
+ _sn.copy(v).transformDirection(mesh.bindMatrix);_sacc.set(0,0,0);
+ for(let k=0;k<4;k++){const w=_sw.getComponent(k),bn=sk.bones[_si.getComponent(k)];if(!w||!bn)continue;_sm.multiplyMatrices(bn.matrixWorld,sk.boneInverses[_si.getComponent(k)]);_sacc.addScaledVector(_st.copy(_sn).transformDirection(_sm),w)}
+ return v.copy(_sacc).transformDirection(mesh.bindMatrixInverse);
+}
+// ================= Bone editor =================
+let editorActive=false,poseActive=false,animActive=false;
+const undoStack=[];
+function pushUndo(){const T=state.target;if(!T)return;undoStack.push(T.parsed.nodes.map(n=>[n.id,T.byId.get(n.id).position.clone()]));if(undoStack.length>40)undoStack.shift()}
+function undo(){const T=state.target,u=undoStack.pop();if(!T||!u)return status($('editStatus'),'Nothing to undo.','warn');stopPreview();u.forEach(([id,q])=>T.byId.get(id).position.copy(q));finishEdit();const b=T.byId.get(state.sel);if(b)state.lastW=b.getWorldPosition(new THREE.Vector3());status($('editStatus'),'Undid the last move.','ok')}
+function nodeDepth(T,n){let d=0,c=n;while(c&&c.parent>=0){c=T.parsed.nodes.find(x=>x.id===c.parent);d++}return d}
+function boneDeltas(){const T=state.target,m=new Map();if(!T)return m;for(const n of T.parsed.nodes){const b=T.bindLocal.get(n.id),r=T.refLocal.get(n.id);if(b&&r){const v=b.clone().sub(r);if(v.lengthSq()>1e-12)m.set(n.id,v)}}return m}
+// Animation SMDs store absolute bone positions. When the user moved bones, shift every frame by the same
+// offset so the exported animations stay consistent with the edited reference skeleton.
+function retargetAnimText(raw,a){
+ const text=shiftAnimText(raw);return a?rotOffsetText(text,state.animations.indexOf(a)):text;
+}
+function shiftAnimText(raw){
+ const d=boneDeltas();if(!d.size)return raw;let sec='';
+ return raw.replace(/\r/g,'').split('\n').map(line=>{const t=line.trim();
+  if(t==='skeleton'){sec='sk';return line}if(t==='end'){sec='';return line}
+  if(sec==='sk'&&!t.startsWith('time')){const a=t.split(/\s+/);if(a.length>=7){const v=d.get(+a[0]);if(v)return `${a[0]} ${smdNum(+a[1]+v.x)} ${smdNum(+a[2]+v.y)} ${smdNum(+a[3]+v.z)} ${a[4]} ${a[5]} ${a[6]}`}}
+  return line}).join('\n');
+}
+function ensureEditor(){
+ const T=state.target;if(!T||T.pickers)return;
+ T.pickers=[];const g=new THREE.SphereGeometry(1.6,8,6),m=new THREE.MeshBasicMaterial({visible:false});
+ T.parsed.nodes.forEach(n=>{const o=new THREE.Mesh(g,m);o.userData.boneId=n.id;T.byId.get(n.id).add(o);T.pickers.push(o)});
+ T.marker=new THREE.Mesh(new THREE.SphereGeometry(.75,12,8),new THREE.MeshBasicMaterial({color:0xffc66d,depthTest:false,transparent:true,opacity:.9}));T.marker.renderOrder=999;applyBoneStyle();
+}
+function resetEditorState(){
+ undoStack.length=0;state.edited=new Set();state.pose=new Map();populatePoseSel();populateAoSel();
+ state.sel=null;if(state.tc)state.tc.detach();
+ const s=$('boneSel');s.innerHTML='';
+ if(state.target)state.target.parsed.nodes.forEach(n=>{const o=document.createElement('option');o.value=n.id;o.textContent=n.name;s.append(o)});
+ $('boneReadout').textContent='No bone selected.';status($('editStatus'),state.target?'Ready. Press Snap, or pick a bone.':'Load both files to edit bones.','');
+ applyBoneStyle();if(editorActive)applyEditorView(true);
+}
+function readStyle(){return {color:$('boneColor').value,opacity:+$('boneOp').value,ball:+$('ballSize').value,thick:+$('boneThick').value,ghost:+$('ghostOp').value}}
+function applyBoneStyle(){
+ const st=state.style=readStyle(),T=state.target;
+ if(T){T.helper.traverse(o=>{const k=o.userData.kind;
+  if(o.isLine){o.visible=false}
+  else if(k==='ball'||k==='stick'){o.material.color.set(st.color);o.material.opacity=st.opacity;o.material.transparent=st.opacity<1;o.material.needsUpdate=true;if(k==='ball')o.scale.setScalar(st.ball)}});
+  if(T.marker)T.marker.scale.setScalar(Math.max(1,st.ball*.28*1.5/.75))}
+ if(state.ghost)state.ghost.material.opacity=st.ghost;
+}
+function setXray(on){const T=state.target;if(!T)return;T.helper.traverse(o=>{if(o.material){o.material.depthTest=!on;o.material.needsUpdate=true;o.renderOrder=on?20:0}})}
+function setCloveOpacity(v){
+ const mats=new Set();state.meshes.forEach(m=>(Array.isArray(m.material)?m.material:[m.material]).forEach(x=>x&&mats.add(x)));
+ mats.forEach(m=>{if(m.userData.origT===undefined){m.userData.origT=m.transparent;m.userData.origO=m.opacity;m.userData.origDW=m.depthWrite}
+  m.transparent=v<1||m.userData.origT;m.opacity=m.userData.origO*v;m.depthWrite=v<1?false:m.userData.origDW;m.needsUpdate=true});
+}
+function applyEditorView(active){const op=active?+$('cloveOpacity').value:state.v1Op;$('v1Op').value=Math.round(op*100);setXray(active&&$('xray').checked);setCloveOpacity(op)}
+function onTabChange(tab){
+ hideSrcMarker();document.body.classList.toggle('rig',tab==='rig');
+ const wasPose=poseActive;editorActive=tab==='editor';document.body.classList.toggle('editing',editorActive);
+ if(editorActive){
+  if(!state.target){status($('editStatus'),'Load the Raze reference SMD first.','warn');return}
+  ensureEditor();applyEditorView(true);
+  if(state.sel==null){const first=state.target.parsed.nodes.find(n=>n.parent>=0)||state.target.parsed.nodes[0];if(first)selectBone(first.id)}else selectBone(state.sel);
+ }else{applyEditorView(false);if(state.tc)state.tc.detach()}
+ if(wasPose&&tab!=='pose')resetPoseBones();
+ poseActive=tab==='pose';
+ if(poseActive){
+  if(!state.target){status($('poseStatus'),'Load the Raze reference SMD first.','warn')}
+  else{ensureEditor();setXray(true);applyPose();
+   if(state.sel==null){const first=state.target.parsed.nodes.find(n=>n.parent>=0)||state.target.parsed.nodes[0];if(first)selectBone(first.id)}else selectBone(state.sel);
+   status($('poseStatus'),state.weights.size?'Pick a bone and use the sliders.':'Calculate weight transfer first (Weight transfer tab), otherwise only the skeleton moves.',state.weights.size?'':'warn')}
+ }
+ animActive=tab==='animations';
+ if(animActive&&state.target){ensureEditor();setXray(true);if(state.sel!=null)animSelSync()}
+ setTimeout(()=>window.dispatchEvent(new Event('resize')),50);
+}
+function selectBone(id){
+ const T=state.target;if(!T||id==null)return;ensureEditor();if(!animActive)stopPreview();if(poseActive)applyPose();
+ const b=T.byId.get(+id);if(!b)return;state.sel=+id;$('boneSel').value=String(id);
+ b.add(T.marker);T.marker.position.set(0,0,0);
+ T.group.updateMatrixWorld(true);state.lastW=b.getWorldPosition(new THREE.Vector3());
+ if(editorActive&&$('gizmoOn').checked)state.tc.attach(b);else state.tc.detach();
+ poseSync();animSelSync();
+ refreshReadout();
+}
+function refreshReadout(){
+ const T=state.target,b=T&&T.byId.get(state.sel);if(!b){$('boneReadout').textContent='No bone selected.';return}
+ T.group.updateMatrixWorld(true);const w=b.getWorldPosition(new THREE.Vector3()),r=T.refLocal.get(state.sel);
+ $('boneReadout').textContent=`${b.name}\nworld  X ${w.x.toFixed(2)}   Y ${w.y.toFixed(2)}   Z ${w.z.toFixed(2)}\nmoved ${b.position.distanceTo(r).toFixed(2)} units from original`;
+}
+// After any edit: the bind pose changed, so refresh the inverse-bind matrices IN PLACE (the live mesh and the
+// ghost share this array). The skinned meshes therefore stay exactly where they are; only the pivots move.
+function finishEdit(){
+ const T=state.target;T.group.updateMatrixWorld(true);
+ T.bones.forEach((b,i)=>{T.boneInverses[i].copy(b.matrixWorld).invert();const bl=T.bindLocal.get(b.userData.smdId);if(bl)bl.copy(b.position)});
+ refreshReadout();
+}
+function postMove(b,oldW){
+ const T=state.target;if(!state.snapping){(state.edited=state.edited||new Set()).add(b.userData.smdId)}T.group.updateMatrixWorld(true);const nw=b.getWorldPosition(new THREE.Vector3());
+ if(!$('childFollow').checked){const dl=nw.clone().sub(oldW).applyQuaternion(b.getWorldQuaternion(new THREE.Quaternion()).invert());for(const c of b.children)if(c.isBone)c.position.sub(dl);b.updateWorldMatrix(false,true)}
+ state.lastW=b.getWorldPosition(new THREE.Vector3());finishEdit();
+}
+function onGizmoChange(){const b=state.target?.byId.get(state.sel);if(b&&state.lastW)postMove(b,state.lastW)}
+function moveBoneWorld(b,newW){b.parent.updateWorldMatrix(true,false);const oldW=b.getWorldPosition(new THREE.Vector3());b.position.copy(b.parent.worldToLocal(newW.clone()));b.updateWorldMatrix(false,true);postMove(b,oldW)}
+function nudgeBone(axis,sign){
+ const T=state.target,b=T&&T.byId.get(state.sel);if(!b)return status($('editStatus'),'Select a bone first.','warn');stopPreview();
+ pushUndo();const step=Math.abs(+$('nudge').value)||.5,v=new THREE.Vector3();v[axis]=sign*step;moveBoneWorld(b,b.getWorldPosition(new THREE.Vector3()).add(v));
+}
+function resetBone(){pushUndo();if(state.edited)state.edited.delete(state.sel);
+ const T=state.target,b=T&&T.byId.get(state.sel);if(!b)return;stopPreview();T.group.updateMatrixWorld(true);const oldW=b.getWorldPosition(new THREE.Vector3());
+ b.position.copy(T.refLocal.get(state.sel));b.updateWorldMatrix(false,true);postMove(b,oldW);
+}
+function resetAllBones(){pushUndo();state.edited=new Set();
+ const T=state.target;if(!T)return;stopPreview();T.parsed.nodes.forEach(n=>{const r=T.refLocal.get(n.id);if(r)T.byId.get(n.id).position.copy(r)});finishEdit();state.lastW=T.byId.get(state.sel)?.getWorldPosition(new THREE.Vector3());
+ status($('editStatus'),'All bones reset to the original Raze skeleton.','ok');
+}
+async function snapToClove(){
+ const T=state.target;if(!T||!state.meshes.length)return status($('editStatus'),'Load the GLB and the Raze reference first.','warn');
+ if(!state.reskinnedGroup){status($('editStatus'),'Calculating weights first so you can see the posed Clove…','');await transferWeights();
+  if(!state.reskinnedGroup)return status($('editStatus'),'Weight transfer did not finish — check the Weight transfer tab.','err')}
+ stopPreview();applyAlignment();if(!Object.keys(state.key).length)autoMap(true);
+ const src=new Map(state.sourceBones.map(b=>[b.name,b])),cnt=new Map();
+ for(const n of T.parsed.nodes){const k=state.key[n.name];if(k)cnt.set(k,(cnt.get(k)||0)+1)}
+ let pm=null;const jobs=[];let locked=[];
+ try{
+  if($('poseMatch').checked)pm=poseMatchClove();
+  const keep=$('keepEdited').checked&&state.edited?state.edited:new Set(),only=state.snapOnly;locked=[];
+  for(const n of T.parsed.nodes){if(keep.has(n.id)){locked.push({id:n.id,w:T.byId.get(n.id).getWorldPosition(new THREE.Vector3()),d:nodeDepth(T,n)})}}
+  for(const n of T.parsed.nodes){const k=state.key[n.name],sb=k&&src.get(k);if(!sb||cnt.get(k)!==1)continue;if(keep.has(n.id)||(only!=null&&n.id!==only))continue;jobs.push({n,w:sb.getWorldPosition(new THREE.Vector3()),d:nodeDepth(T,n)})}
+ }finally{if(pm)pm.restore()}
+ if(!jobs.length)return status($('editStatus'),'No key joints are mapped — open Rig & mapping and press Auto-map bones, or pick them by hand.','warn');
+ jobs.sort((a,b)=>a.d-b.d);const old=$('childFollow').checked;$('childFollow').checked=true;
+ pushUndo();state.snapping=true;try{for(const j of jobs)moveBoneWorld(T.byId.get(j.n.id),j.w);
+  locked.sort((a,b)=>a.d-b.d);for(const l of locked)moveBoneWorld(T.byId.get(l.id),l.w)}finally{state.snapping=false;$('childFollow').checked=old}
+ if(state.sel!=null)selectBone(state.sel);
+ status($('editStatus'),`Snapped ${jobs.length} Raze bone(s) onto Clove's joints${locked.length?` (kept ${locked.length} bone(s) you moved by hand)`:''}. Bones with no unique Clove match (e.g. spine duplicates) just followed their parent — fine-tune them by hand. Press Calculate weight transfer again afterwards so the pose matching uses the edited skeleton.`,'ok');
+}
+function mirrorBones(from){
+ const T=state.target;if(!T)return;stopPreview();ensureEditor();T.group.updateMatrixWorld(true);
+ const nodes=T.parsed.nodes.map(n=>({n,d:describeBone(n.name)}));
+ const L=nodes.find(x=>x.d.part==='thigh'&&x.d.side==='l'),R=nodes.find(x=>x.d.part==='thigh'&&x.d.side==='r');
+ if(!L||!R)return status($('editStatus'),'Could not find left and right thigh bones to define the mirror plane.','warn');
+ const lw=T.byId.get(L.n.id).getWorldPosition(new THREE.Vector3()),rw=T.byId.get(R.n.id).getWorldPosition(new THREE.Vector3()),df=lw.clone().sub(rw);
+ const ax=['x','y','z'].reduce((a,k)=>Math.abs(df[k])>Math.abs(df[a])?k:a,'x'),mid=(lw[ax]+rw[ax])/2,jobs=[];
+ for(const s of nodes){if(s.d.side!==from||!s.d.part||s.d.skip)continue;const o=nodes.find(x=>x.d.part===s.d.part&&x.d.side&&x.d.side!==from&&!x.d.skip);if(!o)continue;
+  const w=T.byId.get(s.n.id).getWorldPosition(new THREE.Vector3());w[ax]=2*mid-w[ax];jobs.push({o:o.n,w,d:nodeDepth(T,o.n)})}
+ if(!jobs.length)return status($('editStatus'),'No left/right bone pairs found.','warn');
+ jobs.sort((a,b)=>a.d-b.d);const old=$('childFollow').checked;$('childFollow').checked=true;
+ pushUndo();try{for(const j of jobs)moveBoneWorld(T.byId.get(j.o.id),j.w)}finally{$('childFollow').checked=old}
+ if(state.sel!=null)selectBone(state.sel);
+ status($('editStatus'),`Copied ${jobs.length} ${from==='l'?'left → right':'right → left'} bone position(s) across the ${ax.toUpperCase()} axis.`,'ok');
+}
+function targetSegments(){
+ const t=state.target,arr=[];if(!t)return arr;t.group.updateMatrixWorld(true);
+ for(const n of t.parsed.nodes){if(n.parent<0)continue;const b=t.byId.get(n.id),p=t.byId.get(n.parent);arr.push({id:n.id,name:n.name,a:p.getWorldPosition(new THREE.Vector3()),b:b.getWorldPosition(new THREE.Vector3())})}
+ return arr;
+}
+function pointSegmentDistance(p,a,b){const ab=b.clone().sub(a),den=ab.lengthSq();if(!den)return p.distanceTo(a);const t=THREE.MathUtils.clamp(p.clone().sub(a).dot(ab)/den,0,1);return p.distanceTo(a.clone().addScaledVector(ab,t))}
+// ---- Donor transfer: equivalent of Blender's Data Transfer modifier, Vertex Groups,
+// "Nearest Face Interpolated". Each Clove vertex is projected onto the closest triangle
+// of Raze's weighted reference mesh and takes the barycentric blend of that triangle's
+// three vertex weights. Raze's mesh is only a weight source; it is never displayed or exported.
+let donor=null;
+function buildDonor(){
+ const tris=state.target?.parsed.triangles||[];
+ if(!tris.length){donor=null;return false}
+ const T=tris.map(t=>({tri:new THREE.Triangle(t.verts[0].p,t.verts[1].p,t.verts[2].p),v:t.verts}));
+ const box=new THREE.Box3();T.forEach(t=>{box.expandByPoint(t.tri.a);box.expandByPoint(t.tri.b);box.expandByPoint(t.tri.c)});
+ const size=box.getSize(new THREE.Vector3()),ext=Math.max(size.x,size.y,size.z),cell=ext/32||1,grid=new Map();
+ const key=(x,y,z)=>((x+512)*1024+(y+512))*1024+(z+512),cx=v=>Math.floor(v/cell);
+ T.forEach((t,i)=>{const b=new THREE.Box3().setFromPoints([t.tri.a,t.tri.b,t.tri.c]);
+  for(let x=cx(b.min.x);x<=cx(b.max.x);x++)for(let y=cx(b.min.y);y<=cx(b.max.y);y++)for(let z=cx(b.min.z);z<=cx(b.max.z);z++){const k=key(x,y,z);let l=grid.get(k);if(!l){l=[];grid.set(k,l)}l.push(i)}});
+ donor={T,grid,cell,key,cx,maxR:Math.ceil(ext/cell)+2,stamp:new Int32Array(T.length),gen:0,tmp:new THREE.Vector3(),bary:new THREE.Vector3(),bestPt:new THREE.Vector3(),acc:new Map()};return true;
+}
+function vertInf(v){return v.inf&&v.inf.length?v.inf:[{bone:v.bone,weight:1}]}
+function donorWeights(p,count){
+ const d=donor,tmp=d.tmp,bary=d.bary;let bestI=-1,bd=Infinity;d.gen++;
+ const cx=d.cx(p.x),cy=d.cx(p.y),cz=d.cx(p.z);
+ for(let r=0;r<=d.maxR;r++){
+  for(let x=cx-r;x<=cx+r;x++)for(let y=cy-r;y<=cy+r;y++){
+   const edge=(x===cx-r||x===cx+r||y===cy-r||y===cy+r),step=edge?1:Math.max(1,2*r);
+   for(let z=cz-r;z<=cz+r;z+=step){
+    const list=d.grid.get(d.key(x,y,z));if(!list)continue;
+    for(let n=0;n<list.length;n++){const i=list[n];if(d.stamp[i]===d.gen)continue;d.stamp[i]=d.gen;d.T[i].tri.closestPointToPoint(p,tmp);const dist=tmp.distanceToSquared(p);if(dist<bd){bd=dist;bestI=i;d.bestPt.copy(tmp)}}
+   }
+  }
+  if(bestI>=0&&Math.sqrt(bd)<=r*d.cell)break;
+ }
+ if(bestI<0)return [];
+ const t=d.T[bestI];t.tri.getBarycoord(d.bestPt,bary);
+ const acc=d.acc;acc.clear();const bs=[bary.x,bary.y,bary.z];
+ for(let k=0;k<3;k++){const b=bs[k];if(!(b>0))continue;for(const it of vertInf(t.v[k]))acc.set(it.bone,(acc.get(it.bone)||0)+it.weight*b)}
+ const out=[...acc.entries()].map(([bone,weight])=>({bone,weight})).sort((a,b)=>b.weight-a.weight).slice(0,count);
+ const sum=out.reduce((a,b)=>a+b.weight,0);return sum>0?out.map(o=>({bone:o.bone,weight:o.weight/sum})):[];
+}
+
+// ---- Arm cleanup (see comment below) ----
+// ---- Arm weight cleanup (pure data in / data out, no three.js) ------------------------------
+// Fixes torn / jagged skin weights on the arms after the donor or GLB transfer:
+//  * arm vertices that picked up Spine / Pelvis weights (arm lies next to the body in the rest pose)
+//  * saw-tooth boundaries between upper arm / forearm / hand
+// Elbow: clean smooth blend centred on the elbow joint. Wrist: clean cut placed where the transfer
+// itself put the cuff / glove seam (auto-detected), with a small blend. Shoulder: faded back into the
+// original weights so the armpit and collar keep their transfer result.
+const _acS=t=>{t=t<0?0:t>1?1:t;return t*t*(3-2*t)};
+let _acT=0,_acD=0;
+function _acSeg(px,py,pz,ax,ay,az,bx,by,bz){
+ const dx=bx-ax,dy=by-ay,dz=bz-az,den=dx*dx+dy*dy+dz*dz;
+ let t=den>0?((px-ax)*dx+(py-ay)*dy+(pz-az)*dz)/den:0;t=t<0?0:t>1?1:t;
+ const qx=ax+dx*t-px,qy=ay+dy*t-py,qz=az+dz*t-pz;_acT=t;_acD=Math.sqrt(qx*qx+qy*qy+qz*qz);
+}
+function armCleanup(meshes,chains,others,opt){
+ const count=Math.max(1,Math.min(4,opt.count||2)),elbowF=opt.elbow,wristF=opt.wrist;
+ // lateral axis (left-right) from the two shoulder joints; falls back to X
+ let lat=[1,0,0],mid=[0,0,0];
+ if(chains.length===2){const a=chains[0].J0,b=chains[1].J0;let v=[a[0]-b[0],a[1]-b[1],a[2]-b[2]];const l=Math.hypot(v[0],v[1],v[2])||1;lat=[v[0]/l,v[1]/l,v[2]/l];mid=[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2]}
+ const latOf=(x,y,z)=>(x-mid[0])*lat[0]+(y-mid[1])*lat[1]+(z-mid[2])*lat[2];
+ const info={changed:0,cuts:[]};
+ for(const ch of chains){
+  const [J0,J1,J2]=[ch.J0,ch.J1,ch.J2];
+  const L1=Math.hypot(J1[0]-J0[0],J1[1]-J0[1],J1[2]-J0[2]),L2=Math.hypot(J2[0]-J1[0],J2[1]-J1[1],J2[2]-J1[2]);
+  if(!(L1>1e-6&&L2>1e-6)){info.cuts.push(null);continue}
+  const tip=[J2[0]+(J2[0]-J1[0])*.8,J2[1]+(J2[1]-J1[1])*.8,J2[2]+(J2[2]-J1[2])*.8];
+  const sg=Math.sign(latOf(J0[0],J0[1],J0[2]))||1,ax=[(J2[0]-J1[0])/L2,(J2[1]-J1[1])/L2,(J2[2]-J1[2])/L2];
+  const R=.25*(L1+L2),latJ1=latOf(J1[0],J1[1],J1[2])*sg;
+  // ---- 1. where did the transfer put the forearm/hand seam? (offset along the forearm axis from the wrist joint, <0 = toward the elbow)
+  const binW=L2/42,lo0=-.75*L2,nb=Math.ceil(.9*L2/binW),sum=new Float64Array(nb),cnt=new Float64Array(nb);
+  for(const m of meshes){const n=m.inf.length,P=m.pos;for(let i=0;i<n;i++){
+   const x=P[i*3],y=P[i*3+1],z=P[i*3+2];if(latOf(x,y,z)*sg<=.7*latJ1)continue;
+   const rx=x-J2[0],ry=y-J2[1],rz=z-J2[2],a=rx*ax[0]+ry*ax[1]+rz*ax[2];if(a<=lo0||a>=.15*L2)continue;
+   const px=rx-a*ax[0],py=ry-a*ax[1],pz=rz-a*ax[2];if(Math.hypot(px,py,pz)>=.45*L2)continue;
+   let wh=0;for(const it of m.inf[i])if(it.bone===ch.h)wh+=it.weight;const k=Math.floor((a-lo0)/binW);if(k>=0&&k<nb){sum[k]+=wh;cnt[k]++}}}
+  let cut=0,prev=null,prevC=0;
+  for(let k=0;k<nb;k++){if(cnt[k]<5)continue;const pr=sum[k]/cnt[k],c=lo0+(k+.5)*binW;
+   if(prev!==null&&prev<.5&&pr>=.5){cut=prevC+(.5-prev)/(pr-prev)*(c-prevC);break}prev=pr;prevC=c}
+  info.cuts.push(cut);
+  // ---- 2. re-weight the arm vertices
+  const we=Math.max(elbowF*Math.min(L1,L2),1e-4),ww=Math.max(wristF*L2,1e-4),sc=L1+L2+cut;
+  for(const m of meshes){const n=m.inf.length,P=m.pos;for(let i=0;i<n;i++){
+   const x=P[i*3],y=P[i*3+1],z=P[i*3+2];if(latOf(x,y,z)*sg<=0)continue;
+   _acSeg(x,y,z,J0[0],J0[1],J0[2],J1[0],J1[1],J1[2]);const t1=_acT,d1=_acD;
+   _acSeg(x,y,z,J1[0],J1[1],J1[2],J2[0],J2[1],J2[2]);const t2=_acT,d2=_acD;
+   _acSeg(x,y,z,J2[0],J2[1],J2[2],tip[0],tip[1],tip[2]);const t3=_acT,d3=_acD;
+   let darm=d1,s=t1*L1;if(d2<darm){darm=d2;s=L1+t2*L2}if(d3<darm){darm=d3;s=L1+L2+t3*L2*.8}
+   if(darm>R||s>sc+ww)continue;
+   let dt=1e30;for(let q=0;q<others.length;q++){const o=others[q];_acSeg(x,y,z,o[0],o[1],o[2],o[3],o[4],o[5]);if(_acD<dt)dt=_acD}
+   const r=darm/Math.max(dt,1e-6),a_=(1-_acS((r-.55)/.6))*_acS((s-.05*L1)/(.45*L1));if(a_<=1e-3)continue;
+   const a=_acS((s-(L1-we))/(2*we)),b=_acS((s-(sc-ww))/(2*ww));
+   let wu,wf,wh;if(s<L1){wu=1-a;wf=a;wh=0}else{wu=1-a;wf=a*(1-b);wh=a*b}
+   const acc=new Map();const add=(k,v)=>acc.set(k,(acc.get(k)||0)+v);
+   if(wu>1e-4)add(ch.u,a_*wu);if(wf>1e-4)add(ch.f,a_*wf);if(wh>1e-4)add(ch.h,a_*wh);
+   for(const it of m.inf[i])add(it.bone,(1-a_)*it.weight);
+   let out=[...acc.entries()].map(([bone,weight])=>({bone,weight})).sort((p,q)=>q.weight-p.weight).slice(0,count);
+   const tot=out.reduce((p,q)=>p+q.weight,0)||1;out=out.map(o=>({bone:o.bone,weight:o.weight/tot})).filter(o=>o.weight>1e-3);
+   const t2s=out.reduce((p,q)=>p+q.weight,0)||1;m.inf[i]=out.map(o=>({bone:o.bone,weight:o.weight/t2s}));info.changed++;
+  }}
+ }
+ return info;
+}
+
+
+function runArmCleanup(count){
+ const T=state.target;if(!T||!state.weights.size||!state.baked)return null;
+ const arm=n=>['upperarm','forearm','hand'].includes(describeBone(n.name).part);
+ const chains=[];
+ for(const side of ['l','r']){
+  const pick=part=>T.parsed.nodes.find(n=>{const d=describeBone(n.name);return d.side===side&&d.part===part});
+  const u=pick('upperarm'),f=pick('forearm'),h=pick('hand');if(!u||!f||!h)continue;
+  const P=n=>T.byId.get(n.id).getWorldPosition(new THREE.Vector3()).toArray();
+  chains.push({u:u.id,f:f.id,h:h.id,J0:P(u),J1:P(f),J2:P(h)});
+ }
+ if(!chains.length)return {changed:0,cuts:[],noChain:true};
+ const others=targetSegments().filter(sg=>{const n=T.parsed.nodes.find(x=>x.id===sg.id);return n&&!arm(n)}).map(sg=>[sg.a.x,sg.a.y,sg.a.z,sg.b.x,sg.b.y,sg.b.z]);
+ const meshes=[];for(const mesh of state.meshes){const w=state.weights.get(mesh),bk=state.baked.get(mesh);if(w&&bk)meshes.push({pos:bk.pos,inf:w})}
+ return armCleanup(meshes,chains,others,{elbow:+$('elbowBlend').value,wrist:+$('wristBlend').value,count});
+}
+function mapSig(){return JSON.stringify([state.key,$('poseMatch').checked,$('wMethod').value,$('influences').value,$('armClean').checked,$('elbowBlend').value,$('wristBlend').value])}
+function checkStale(){if(state.xferSig&&state.xferSig!==mapSig())status($('weightStatus'),'Key joints or weight settings changed since the last transfer. Press "Calculate weight transfer" again, otherwise the preview still shows the OLD result.','warn')}
+const tick=()=>new Promise(r=>setTimeout(r,0));
+let transferBusy=false;
+async function transferWeights(){
+ if(transferBusy)return;
+ if(!state.target||!state.meshes.length)return status($('weightStatus'),'Load a GLB and target reference SMD first.','warn');
+ transferBusy=true;$('transferBtn').disabled=true;let pm=null;
+ try{
+ stopPreview();// always bind from the standing pose, never from a playing animation
+ const segs=targetSegments();if(!segs.length)return status($('weightStatus'),'Target skeleton has no bone segments.','err');
+ // read every setting ONCE (reading inputs per vertex was a major cause of the lag)
+ const count=Math.max(1,Math.min(4,+$('influences').value)),power=+$('falloff').value,exclude=$('excludeRoot').value==='yes';
+ const axis=$('axis').value,scaleV=+$('scale').value||1,rz=(+$('rot').value||0)*Math.PI/180,off=new THREE.Vector3(+$('ox').value||0,+$('oy').value||0,+$('oz').value||0);
+ const zAxis=new THREE.Vector3(0,0,1),qz=new THREE.Quaternion().setFromAxisAngle(zAxis,rz);
+ const nodeByName=new Map(state.target.parsed.nodes.map(n=>[n.name,n]));
+ const useDonor=$('wMethod').value==='donor'&&buildDonor();
+ const segList=segs.filter(sg=>!(exclude&&sg.name.toLowerCase()==='bip01'));
+ state.weights.clear();state.baked=new Map();
+ const totalVerts=state.meshes.reduce((n,m)=>n+(m.geometry?.attributes.position?.count||0),0);let done=0,total=0,last=performance.now();
+ const p=new THREE.Vector3(),nv=new THREE.Vector3();
+ const rcache=new Map(),resolveCached=b=>{let v=rcache.get(b);if(v===undefined){v=resolveTarget(b);rcache.set(b,v)}return v};
+ applyAlignment();// make sure the preview group uses exactly the values currently typed in
+ if($('poseMatch').checked){if(!Object.keys(state.key).length)autoMap(true);pm=poseMatchClove()}
+ for(const mesh of state.meshes){
+  const geom=mesh.geometry;if(!geom?.attributes.position)continue;const rel=meshToRaw(mesh);
+  const pos=geom.attributes.position,norm=geom.attributes.normal,n=pos.count,arr=new Array(n);
+  const bpos=new Float32Array(n*3),bnorm=new Float32Array(n*3);
+  const si=geom.attributes.skinIndex,sw=geom.attributes.skinWeight,skinBones=mesh.isSkinnedMesh&&mesh.skeleton?mesh.skeleton.bones:null;
+  for(let i=0;i<n;i++){
+   if(mesh.isSkinnedMesh)mesh.getVertexPosition(i,p);else p.fromBufferAttribute(pos,i);
+   p.applyMatrix4(rel);axisInto(p,axis);p.multiplyScalar(scaleV).applyQuaternion(qz).add(off);
+   bpos[i*3]=p.x;bpos[i*3+1]=p.y;bpos[i*3+2]=p.z;
+   if(norm){nv.fromBufferAttribute(norm,i);if(mesh.isSkinnedMesh&&si&&sw&&mesh.skeleton)skinnedNormal(mesh,i,nv);nv.transformDirection(rel)}else nv.set(0,0,1);
+   axisInto(nv,axis);nv.applyQuaternion(qz);if(nv.lengthSq())nv.normalize();
+   bnorm[i*3]=nv.x;bnorm[i*3+1]=nv.y;bnorm[i*3+2]=nv.z;
+   let influences=[];
+   if(useDonor)influences=donorWeights(p,count);
+   else if(skinBones&&si&&sw){
+    const mapped=new Map();
+    for(let k=0;k<4;k++){const sb=skinBones[si.getComponent(i,k)],w=sw.getComponent(i,k);if(!sb||w<=0)continue;const tn=nodeByName.get(resolveCached(sb));if(tn)mapped.set(tn.id,(mapped.get(tn.id)||0)+w)}
+    influences=[...mapped.entries()].map(([bone,weight])=>({bone,weight})).sort((a,b)=>b.weight-a.weight).slice(0,count);
+    const sum=influences.reduce((a,b)=>a+b.weight,0)||1;influences=influences.map(x=>({bone:x.bone,weight:x.weight/sum}));
+   }
+   if(!influences.length){
+    const ds=segList.map(sg=>({id:sg.id,d:pointSegmentDistance(p,sg.a,sg.b)})).sort((a,b)=>a.d-b.d).slice(0,count);
+    const inv=ds.map(x=>1/Math.pow(Math.max(x.d,.01),power)),sum=inv.reduce((a,b)=>a+b,0)||1;
+    influences=ds.map((x,j)=>({bone:x.id,weight:inv[j]/sum}));
+   }
+   arr[i]=influences;done++;
+   if((i&255)===0&&performance.now()-last>40){$('weightProgress').style.width=(done/totalVerts*100).toFixed(0)+'%';status($('weightStatus'),`Working… ${done.toLocaleString()} / ${totalVerts.toLocaleString()} vertices`,'');await tick();last=performance.now()}
+  }
+  state.weights.set(mesh,arr);state.baked.set(mesh,{pos:bpos,norm:bnorm});total+=n;
+ }
+ state.bakedKey=alignKey();
+ let ac=null;if($('armClean').checked){status($('weightStatus'),'Cleaning up arm weights…','');await tick();try{ac=runArmCleanup(count)}catch(e){console.error(e)}}
+ $('weightProgress').style.width='100%';status($('weightStatus'),'Building live bound mesh…','');await tick();
+ state.rollBase=new Map();for(const [m,bk] of state.baked)state.rollBase.set(m,{pos:bk.pos.slice(),norm:bk.norm.slice()});
+ const r=buildReskin();applyRoll();state.xferSig=mapSig();
+ const extra=r&&r.boundMeshes?` Live preview rebuilt: ${r.boundMeshes} mesh(es) / ${r.boundVerts.toLocaleString()} vertices are now an actual SkinnedMesh bound to Raze's ${state.target.bones.length} target bones — Clove's real mesh now follows the skeleton in the viewport and in animation preview.`:' Live preview could not be built.';
+ const armMsg=ac?(ac.noChain?' Arm cleanup skipped: could not find the UpperArm / Forearm / Hand bones.':` Arm cleanup re-weighted ${ac.changed.toLocaleString()} vertices.`):'';
+ const poseMsg=$('poseMatch').checked?(pm&&pm.matched?` Posed ${pm.matched} Clove limb joint(s) to Raze's rest pose first.`:' Pose matching found no usable limb joints — check Key joints.'):'';
+ status($('weightStatus'),`Calculated weights for ${total.toLocaleString()} vertices across ${state.weights.size} mesh(es).${poseMsg}${armMsg}${extra}`,r&&(!$('poseMatch').checked||(pm&&pm.matched))?'ok':'warn');
+ }catch(e){status($('weightStatus'),'Weight transfer failed: '+e.message,'err');console.error(e)}
+ finally{if(pm)pm.restore();transferBusy=false;$('transferBtn').disabled=false}
+}
+// ===== Live arm roll: rotates the already-baked Clove vertices around the Raze arm axes, scaled by skin weight =====
+function applyRoll(){
+ const T=state.target,st=$('rollStatus');
+ if(!T||!state.baked||!state.rollBase||!state.weights.size){if(st)status(st,'Calculate weight transfer first.','warn');return}
+ const rU=+$('rollU').value||0,rF=+$('rollF').value||0,rH=+$('rollH').value||0,rs=$('rollSide').value;
+ const bp=n=>new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(T.boneInverses[T.boneIndexById.get(n.id)]).invert());
+ const ops=[];
+ if(rU||rF||rH)for(const side of ['l','r']){
+  if(rs!=='both'&&rs!==side)continue;
+  const pick=part=>T.parsed.nodes.find(n=>{const d=describeBone(n.name);return d.side===side&&d.part===part});
+  const u=pick('upperarm'),f=pick('forearm'),h=pick('hand');if(!u||!f||!h)continue;
+  const J0=bp(u),J1=bp(f),J2=bp(h),sg=(rs==='both'&&side==='r')?-1:1;
+  const ax1=J1.clone().sub(J0),ax2=J2.clone().sub(J1);if(ax1.lengthSq()<1e-12||ax2.lengthSq()<1e-12)continue;ax1.normalize();ax2.normalize();
+  if(rU)ops.push({o:J0,k:ax1,a:sg*rU*Math.PI/180,set:new Set([u.id,f.id,h.id])});
+  if(rF)ops.push({o:J1,k:ax2,a:sg*rF*Math.PI/180,set:new Set([f.id,h.id])});
+  if(rH)ops.push({o:J2,k:ax2,a:sg*rH*Math.PI/180,set:new Set([h.id])});
+ }
+ for(const [mesh,bk] of state.baked){
+  const base=state.rollBase.get(mesh),w=state.weights.get(mesh);if(!base||!w)continue;
+  bk.pos.set(base.pos);bk.norm.set(base.norm);
+  if(ops.length){
+   const n=bk.pos.length/3;
+   for(let i=0;i<n;i++){const inf=w[i];if(!inf)continue;
+    for(const op of ops){let wt=0;for(const it of inf)if(op.set.has(it.bone))wt+=it.weight;if(wt<1e-4)continue;
+     const ang=op.a*Math.min(1,wt),c=Math.cos(ang),s=Math.sin(ang),kx=op.k.x,ky=op.k.y,kz=op.k.z;
+     // position (relative to pivot), Rodrigues
+     let vx=bk.pos[i*3]-op.o.x,vy=bk.pos[i*3+1]-op.o.y,vz=bk.pos[i*3+2]-op.o.z,d=kx*vx+ky*vy+kz*vz;
+     bk.pos[i*3]=op.o.x+vx*c+(ky*vz-kz*vy)*s+kx*d*(1-c);bk.pos[i*3+1]=op.o.y+vy*c+(kz*vx-kx*vz)*s+ky*d*(1-c);bk.pos[i*3+2]=op.o.z+vz*c+(kx*vy-ky*vx)*s+kz*d*(1-c);
+     vx=bk.norm[i*3];vy=bk.norm[i*3+1];vz=bk.norm[i*3+2];d=kx*vx+ky*vy+kz*vz;
+     bk.norm[i*3]=vx*c+(ky*vz-kz*vy)*s+kx*d*(1-c);bk.norm[i*3+1]=vy*c+(kz*vx-kx*vz)*s+ky*d*(1-c);bk.norm[i*3+2]=vz*c+(kx*vy-ky*vx)*s+kz*d*(1-c);
+    }}
+  }
+  const sk=state.reskinMap&&state.reskinMap.get(mesh);
+  if(sk){sk.geometry.attributes.position.needsUpdate=true;sk.geometry.attributes.normal.needsUpdate=true;sk.geometry.computeBoundingSphere()}
+ }
+ if(st)status(st,ops.length?`Roll applied live (${ops.length} segment(s)). It is included when you export.`:'Roll is 0 — mesh unchanged.','ok');
+}
+// ===== Pose tab: pose the skinned mesh by rotating bones, then optionally bake the pose into the vertices =====
+const DEG=Math.PI/180;
+state.pose=new Map();let poseSyncing=false;
+function poseVals(id){return state.pose.get(id)||{x:0,y:0,z:0}}
+function poseHas(){for(const d of state.pose.values())if(d.x||d.y||d.z)return true;return false}
+function applyPose(){
+ const T=state.target;if(!T)return;
+ applyScales();
+ const base=T.parsed.frames[0]?.transforms||{};
+ const order=T.parsed.nodes.slice().sort((a,b)=>nodeDepth(T,a)-nodeDepth(T,b));
+ const qb=new THREE.Quaternion(),qp=new THREE.Quaternion(),qr=new THREE.Quaternion(),e=new THREE.Euler(),out=new THREE.Quaternion();
+ for(const n of order){
+  const b=T.byId.get(n.id),tr=base[n.id];if(!tr)continue;
+  qb.setFromEuler(tr.r);
+  const d=state.pose.get(n.id);
+  if(!d||(!d.x&&!d.y&&!d.z)){b.quaternion.copy(qb);b.updateWorldMatrix(true,false);continue}
+  qp.identity();if(b.parent)b.parent.getWorldQuaternion(qp);
+  qr.setFromEuler(e.set(d.x*DEG,d.y*DEG,d.z*DEG,'XYZ'));
+  out.copy(qp).invert().multiply(qr).multiply(qp).multiply(qb);// L' = Wp^-1 * R * Wp * Lbind
+  b.quaternion.copy(out);b.updateWorldMatrix(true,false);
+ }
+ T.group.updateMatrixWorld(true);
+}
+function resetPoseBones(){const keep=state.pose;state.pose=new Map();applyPose();state.pose=keep}
+function populatePoseSel(){
+ const s=$('poseSel');if(!s)return;poseSyncing=true;s.innerHTML='';
+ if(state.target)state.target.parsed.nodes.forEach(n=>{const o=document.createElement('option');o.value=n.id;o.textContent=n.name;s.append(o)});
+ s.dispatchEvent(new Event('change'));poseSyncing=false;
+}
+function poseSync(){
+ const s=$('poseSel');if(!s||state.sel==null)return;poseSyncing=true;s.value=String(state.sel);poseSyncing=false;
+ const d=poseVals(state.sel);for(const k of ['X','Y','Z']){$('pose'+k).value=d[k.toLowerCase()];$('pose'+k+'V').textContent=d[k.toLowerCase()]}
+}
+function poseInput(){
+ if(state.sel==null||!state.target)return;
+ const d={x:+$('poseX').value||0,y:+$('poseY').value||0,z:+$('poseZ').value||0};
+ for(const k of ['X','Y','Z'])$('pose'+k+'V').textContent=$('pose'+k).value;
+ if(d.x||d.y||d.z)state.pose.set(state.sel,d);else state.pose.delete(state.sel);
+ stopPreview();applyPose();
+}
+function poseReset(all){
+ if(!state.target)return;
+ if(all)state.pose=new Map();else state.pose.delete(state.sel);
+ applyPose();poseSync();status($('poseStatus'),all?'All bones reset.':'Bone reset.','ok');
+}
+function refreshReskinGeo(mesh){const sk=state.reskinMap&&state.reskinMap.get(mesh);if(sk){sk.geometry.attributes.position.needsUpdate=true;sk.geometry.attributes.normal.needsUpdate=true;sk.geometry.computeBoundingSphere()}}
+function bakePose(){
+ const T=state.target;
+ if(!T||!state.baked||!state.weights.size)return status($('poseStatus'),'Calculate weight transfer first.','warn');
+ if(!poseHas())return status($('poseStatus'),'Nothing to bake — rotate a bone first.','warn');
+ stopPreview();applyPose();
+ const mats=T.bones.map((b,i)=>new THREE.Matrix4().multiplyMatrices(b.matrixWorld,T.boneInverses[i]).elements);
+ const undo={roll:['rollU','rollF','rollH'].map(id=>$(id).value),items:new Map()};let moved=0;
+ for(const [mesh,bk] of state.baked){
+  const w=state.weights.get(mesh),rb=state.rollBase&&state.rollBase.get(mesh);if(!w)continue;
+  undo.items.set(mesh,{pos:bk.pos.slice(),norm:bk.norm.slice(),rbPos:rb?rb.pos.slice():null,rbNorm:rb?rb.norm.slice():null});
+  const n=bk.pos.length/3,np=new Float32Array(bk.pos.length),nn=new Float32Array(bk.norm.length);
+  for(let i=0;i<n;i++){
+   const inf=w[i];const x=bk.pos[i*3],y=bk.pos[i*3+1],z=bk.pos[i*3+2],nx=bk.norm[i*3],ny=bk.norm[i*3+1],nz=bk.norm[i*3+2];
+   let ax=0,ay=0,az=0,bx=0,by=0,bz=0,tw=0;
+   if(inf)for(const it of inf){const idx=T.boneIndexById.get(it.bone);if(idx===undefined)continue;const e=mats[idx],wt=it.weight;tw+=wt;
+    ax+=wt*(e[0]*x+e[4]*y+e[8]*z+e[12]);ay+=wt*(e[1]*x+e[5]*y+e[9]*z+e[13]);az+=wt*(e[2]*x+e[6]*y+e[10]*z+e[14]);
+    bx+=wt*(e[0]*nx+e[4]*ny+e[8]*nz);by+=wt*(e[1]*nx+e[5]*ny+e[9]*nz);bz+=wt*(e[2]*nx+e[6]*ny+e[10]*nz)}
+   if(tw>1e-6){np[i*3]=ax/tw;np[i*3+1]=ay/tw;np[i*3+2]=az/tw;const l=Math.hypot(bx,by,bz)||1;nn[i*3]=bx/l;nn[i*3+1]=by/l;nn[i*3+2]=bz/l;moved++}
+   else{np[i*3]=x;np[i*3+1]=y;np[i*3+2]=z;nn[i*3]=nx;nn[i*3+1]=ny;nn[i*3+2]=nz}
+  }
+  bk.pos.set(np);bk.norm.set(nn);
+  if(rb){rb.pos=np.slice();rb.norm=nn.slice()}// roll (if any) is now part of the mesh
+ }
+ state.bakeUndo=undo;
+ for(const id of ['rollU','rollF','rollH']){$(id).value=0;$(id+'V').textContent='0'}
+ state.pose=new Map();applyPose();poseSync();
+ for(const [mesh] of state.baked)refreshReskinGeo(mesh);
+ status($('poseStatus'),`Baked the pose into ${moved.toLocaleString()} vertices. The bones are back at rest and Clove keeps the new shape. Press "Undo last bake" if it is wrong.`+(undo.roll.some(v=>+v)?' Arm roll was baked in too and reset to 0.':''),'ok');
+}
+function undoBake(){
+ const u=state.bakeUndo;if(!u||!state.baked)return status($('poseStatus'),'No bake to undo.','warn');
+ for(const [mesh,o] of u.items){const bk=state.baked.get(mesh),rb=state.rollBase&&state.rollBase.get(mesh);if(!bk)continue;bk.pos.set(o.pos);bk.norm.set(o.norm);if(rb&&o.rbPos){rb.pos=o.rbPos;rb.norm=o.rbNorm}}
+ ['rollU','rollF','rollH'].forEach((id,i)=>{$(id).value=u.roll[i];$(id+'V').textContent=u.roll[i]});
+ if(u.bonePos){const T=state.target,sp=state.pose;state.pose=new Map();state.scl=new Map();applyPose();u.bonePos.forEach(([id,p])=>T.byId.get(id).position.copy(p));finishEdit();state.scl=u.scl||new Map();state.pose=sp;applyPose();sclSync()}
+ state.bakeUndo=null;applyRoll();
+ for(const [mesh] of state.baked)refreshReskinGeo(mesh);
+ status($('poseStatus'),'Undid the last bake.','ok');
+}
+// ===== Per-animation bone rotation offsets (applied in preview and in the exported animation SMDs) =====
+state.aoAll=new Map();state.aoOne=new Map();
+function aoStore(scope,ai,create){if(scope==='all')return state.aoAll;let m=state.aoOne.get(ai);if(!m&&create){m=new Map();state.aoOne.set(ai,m)}return m}
+function aoQuat(d){return new THREE.Quaternion().setFromEuler(new THREE.Euler(d.x*DEG,d.y*DEG,d.z*DEG,'XYZ'))}
+// combined world-axis rotation per bone for animation index ai, or null if there are none
+function animOfs(ai){
+ const all=state.aoAll,one=state.aoOne.get(ai),out=new Map();
+ const ids=new Set([...all.keys(),...(one?one.keys():[])]);
+ for(const id of ids){const q=new THREE.Quaternion();const o=one&&one.get(id),a=all.get(id);if(o)q.copy(aoQuat(o));if(a)q.multiply(aoQuat(a));out.set(id,q)}
+ return out.size?out:null;
+}
+function targetOrder(){const T=state.target;if(!T.order)T.order=T.parsed.nodes.slice().sort((a,b)=>nodeDepth(T,a)-nodeDepth(T,b));return T.order}
+// local rotation (Quaternion) of every node for one frame, with the offsets applied: L' = Wp^-1 * R * Wp * L
+function frameRots(fr,ofs){
+ const W=new Map(),out=new Map(),I=new THREE.Quaternion(),e=new THREE.Euler();
+ for(const n of targetOrder()){
+  const Wp=(n.parent>=0&&W.get(n.parent))||I,tr=fr.transforms[n.id];
+  if(!tr){W.set(n.id,Wp);continue}
+  const L=new THREE.Quaternion().setFromEuler(tr.r),R=ofs.get(n.id);let L2=L;
+  if(R)L2=Wp.clone().invert().multiply(R).multiply(Wp).multiply(L);
+  W.set(n.id,Wp.clone().multiply(L2));out.set(n.id,L2);
+ }
+ return out;
+}
+function rotOffsetText(text,ai){
+ const a=state.animations[ai],ofs=animOfs(ai);if(!a||!ofs)return text;
+ let sec='',fi=-1,rots=null;const e=new THREE.Euler();
+ return text.replace(/\r/g,'').split('\n').map(line=>{const t=line.trim();
+  if(t==='skeleton'){sec='sk';return line}if(t==='end'){sec='';return line}
+  if(sec==='sk'){
+   if(t.startsWith('time')){fi++;const fr=a.parsed.frames[fi];rots=fr?frameRots(fr,ofs):null;return line}
+   if(rots){const p=t.split(/\s+/);if(p.length>=7){const q=rots.get(+p[0]);if(q){e.setFromQuaternion(q,'ZYX');return `${p[0]} ${p[1]} ${p[2]} ${p[3]} ${smdNum(e.x)} ${smdNum(e.y)} ${smdNum(e.z)}`}}}
+  }
+  return line}).join('\n');
+}
+function aoSync(){
+ const sel=$('aoSel');if(!sel||sel.value==='')return;
+ const ai=+$('animSelect').value,st=aoStore($('aoScope').value,ai,false),d=(st&&st.get(+sel.value))||{x:0,y:0,z:0};
+ for(const k of ['X','Y','Z']){$('ao'+k).value=d[k.toLowerCase()];$('ao'+k+'V').textContent=d[k.toLowerCase()]}
+}
+function aoInput(){
+ const sel=$('aoSel');if(!state.target||sel.value==='')return;
+ const ai=+$('animSelect').value,scope=$('aoScope').value;
+ if(scope==='one'&&!state.animations[ai])return status($('aoStatus'),'Load and select an animation first.','warn');
+ const d={x:+$('aoX').value||0,y:+$('aoY').value||0,z:+$('aoZ').value||0};
+ for(const k of ['X','Y','Z'])$('ao'+k+'V').textContent=$('ao'+k).value;
+ const st=aoStore(scope,ai,true),id=+sel.value;
+ if(d.x||d.y||d.z)st.set(id,d);else st.delete(id);
+ {const c=state.playCtx;if(c&&c.ai===ai){if(c.paused)c.apply()}else if(state.animations[ai])playSelected()}
+ status($('aoStatus'),`${scope==='all'?'All animations':'This animation'}: ${st.size} bone(s) corrected.`,'ok');
+}
+function aoReset(all){
+ const ai=+$('animSelect').value,scope=$('aoScope').value,st=aoStore(scope,ai,false);
+ if(st){if(all)st.clear();else st.delete(+$('aoSel').value)}
+ {const c=state.playCtx;if(c&&c.paused)c.apply()}aoSync();status($('aoStatus'),all?'Reset every correction in this scope.':'Bone reset.','ok');
+}
+function populateAoSel(){
+ const s=$('aoSel');if(!s)return;s.innerHTML='';
+ if(state.target)state.target.parsed.nodes.forEach(n=>{const o=document.createElement('option');o.value=n.id;o.textContent=n.name;s.append(o)});
+ s.dispatchEvent(new Event('change'));
+}
+
+// ===== Bone scale (live preview + bake into the mesh) and flip helpers =====
+state.scl=new Map();
+function applyScales(){const T=state.target;if(!T)return;for(const n of T.parsed.nodes){const sc=state.scl.get(n.id),b=T.byId.get(n.id);if(b)b.scale.set(sc?sc.x:1,sc?sc.y:1,sc?sc.z:1)}}
+function sclVals(id){return state.scl.get(id)||{x:1,y:1,z:1}}
+function sclHas(){for(const v of state.scl.values())if(v.x!==1||v.y!==1||v.z!==1)return true;return false}
+function sclSync(){
+ if(!$('sclA'))return;const id=state.sel;if(id==null)return;const v=sclVals(id);
+ for(const k of ['X','Y','Z']){const x=v[k.toLowerCase()];$('scl'+k).value=x;$('scl'+k+'V').textContent=(+x).toFixed(2)}
+ const u=(v.x===v.y&&v.y===v.z)?v.x:1;$('sclA').value=u;$('sclAV').textContent=(+u).toFixed(2);
+}
+function animSelSync(){
+ const T=state.target,id=state.sel;if(!T||id==null)return;
+ const nm=T.byId.get(id)?.name||'none';if($('selBoneName'))$('selBoneName').textContent=nm;
+ const s=$('aoSel');if(s&&s.value!==String(id)){s.value=String(id);aoSync()}
+ sclSync();
+}
+function sclRefresh(){
+ const c=state.playCtx;
+ if(c){if(c.paused)c.apply()}
+ else if(state.target)applyPose();
+ const n=[...state.scl.keys()].length;
+ status($('sclStatus'),n?`${n} bone(s) resized (preview only until you bake).`:'All sizes are 1.0.','ok');
+}
+function sclInput(src){
+ if(state.sel==null||!state.target)return status($('sclStatus'),'Tap a bone in the 3D view first.','warn');
+ let v;
+ if(src==='A'){const x=+$('sclA').value||1;v={x,y:x,z:x}}
+ else v={x:+$('sclX').value||1,y:+$('sclY').value||1,z:+$('sclZ').value||1};
+ if(v.x===1&&v.y===1&&v.z===1)state.scl.delete(state.sel);else state.scl.set(state.sel,v);
+ sclSync();sclRefresh();
+}
+function sclReset(all){
+ if(!state.target)return;
+ if(all)state.scl=new Map();else if(state.sel!=null)state.scl.delete(state.sel);
+ sclSync();sclRefresh();
+}
+function aoFlip(k){const e=$('ao'+k.toUpperCase());let v=(+e.value||0)+180;if(v>180)v-=360;e.value=v;aoInput()}
+function bakeScale(){
+ const T=state.target,st=$('sclStatus');
+ if(!T||!state.baked||!state.weights.size)return status(st,'Calculate weight transfer first.','warn');
+ if(!sclHas())return status(st,'Nothing to bake — change a bone size first.','warn');
+ stopPreview();
+ const savedPose=state.pose,savedScl=new Map([...state.scl].map(([k,v])=>[k,{...v}]));
+ const bonePos=T.parsed.nodes.map(n=>[n.id,T.byId.get(n.id).position.clone()]);
+ state.pose=new Map();applyPose();// rest rotations + scales only
+ const mats=T.bones.map((b,i)=>new THREE.Matrix4().multiplyMatrices(b.matrixWorld,T.boneInverses[i]).elements);
+ const world=T.parsed.nodes.map(n=>({id:n.id,w:T.byId.get(n.id).getWorldPosition(new THREE.Vector3()),d:nodeDepth(T,n)}));
+ const undo={roll:['rollU','rollF','rollH'].map(id=>$(id).value),items:new Map(),bonePos,scl:savedScl};let moved=0;
+ for(const [mesh,bk] of state.baked){
+  const w=state.weights.get(mesh),rb=state.rollBase&&state.rollBase.get(mesh);if(!w)continue;
+  undo.items.set(mesh,{pos:bk.pos.slice(),norm:bk.norm.slice(),rbPos:rb?rb.pos.slice():null,rbNorm:rb?rb.norm.slice():null});
+  const n=bk.pos.length/3,np=new Float32Array(bk.pos.length),nn=new Float32Array(bk.norm.length);
+  for(let i=0;i<n;i++){
+   const inf=w[i];const x=bk.pos[i*3],y=bk.pos[i*3+1],z=bk.pos[i*3+2],nx=bk.norm[i*3],ny=bk.norm[i*3+1],nz=bk.norm[i*3+2];
+   let ax=0,ay=0,az=0,bx=0,by=0,bz=0,tw=0;
+   if(inf)for(const it of inf){const idx=T.boneIndexById.get(it.bone);if(idx===undefined)continue;const e=mats[idx],wt=it.weight;tw+=wt;
+    ax+=wt*(e[0]*x+e[4]*y+e[8]*z+e[12]);ay+=wt*(e[1]*x+e[5]*y+e[9]*z+e[13]);az+=wt*(e[2]*x+e[6]*y+e[10]*z+e[14]);
+    bx+=wt*(e[0]*nx+e[4]*ny+e[8]*nz);by+=wt*(e[1]*nx+e[5]*ny+e[9]*nz);bz+=wt*(e[2]*nx+e[6]*ny+e[10]*nz)}
+   if(tw>1e-6){np[i*3]=ax/tw;np[i*3+1]=ay/tw;np[i*3+2]=az/tw;const l=Math.hypot(bx,by,bz)||1;nn[i*3]=bx/l;nn[i*3+1]=by/l;nn[i*3+2]=bz/l;moved++}
+   else{np[i*3]=x;np[i*3+1]=y;np[i*3+2]=z;nn[i*3]=nx;nn[i*3+1]=ny;nn[i*3+2]=nz}
+  }
+  bk.pos.set(np);bk.norm.set(nn);
+  if(rb){rb.pos=np.slice();rb.norm=nn.slice()}
+ }
+ // scales are now in the mesh: clear them and move the joints to where the scaled skeleton had them,
+ // so the pivots (and the exported reference skeleton) match the resized mesh
+ state.scl=new Map();applyPose();
+ world.sort((a,b)=>a.d-b.d);
+ const old=$('childFollow').checked;$('childFollow').checked=true;state.snapping=true;
+ try{for(const j of world)moveBoneWorld(T.byId.get(j.id),j.w)}finally{state.snapping=false;$('childFollow').checked=old}
+ state.pose=savedPose;applyPose();
+ for(const id of ['rollU','rollF','rollH']){$(id).value=0;$(id+'V').textContent='0'}
+ state.bakeUndo=undo;
+ for(const [mesh] of state.baked)refreshReskinGeo(mesh);
+ sclSync();
+ status(st,`Baked the new sizes into ${moved.toLocaleString()} vertices and moved the joints to match. Included in the export. "Undo last bake" reverts it.`,'ok');
+}
+function disposeReskin(){
+ state.reskinMap=new Map();
+ if(!state.reskinnedGroup)return;
+ if(state.scene)state.scene.remove(state.reskinnedGroup);
+ state.reskinnedGroup.traverse(o=>{if(o.geometry)o.geometry.dispose()});
+ state.reskinnedGroup=null;
+}
+// Builds a *real* THREE.SkinnedMesh per source mesh, baked into the same aligned
+// coordinate space as the target skeleton (scale/rotation/offset/axis remap applied
+// once to the vertex data, not re-applied via a parent transform), bound to Raze's
+// bones with inverse-bind matrices captured from the reference SMD's bind pose.
+// This is what actually makes Clove's geometry follow Raze's skeleton instead of the
+// skeleton and mesh animating independently of one another.
+function buildReskin(){
+ disposeReskin();
+ if(!state.target||!state.weights.size||!state.baked)return null;
+ const group=new THREE.Group();group.name='Clove reskinned (live, bound to Raze bones)';
+ const skeleton=new THREE.Skeleton(state.target.bones,state.target.boneInverses);
+ let boundMeshes=0,boundVerts=0;
+ for(const mesh of state.meshes){
+  const w=state.weights.get(mesh),bk=state.baked.get(mesh);if(!w||!bk)continue;
+  const geom=mesh.geometry,uv=geom.attributes.uv,n=geom.attributes.position.count;
+  const outUv=uv?new Float32Array(n*2):null,skinIndex=new Uint16Array(n*4),skinWeight=new Float32Array(n*4);
+  for(let i=0;i<n;i++){
+   if(outUv){outUv[i*2]=uv.getX(i);outUv[i*2+1]=uv.getY(i)}
+   const inf=w[i]||[];
+   for(let k=0;k<4;k++){const it=inf[k];skinIndex[i*4+k]=it?(state.target.boneIndexById.get(it.bone)||0):0;skinWeight[i*4+k]=it?it.weight:0}
+  }
+  const g2=new THREE.BufferGeometry();
+  g2.setAttribute('position',new THREE.BufferAttribute(bk.pos,3));
+  g2.setAttribute('normal',new THREE.BufferAttribute(bk.norm,3));
+  if(outUv)g2.setAttribute('uv',new THREE.BufferAttribute(outUv,2));
+  g2.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(skinIndex,4));
+  g2.setAttribute('skinWeight',new THREE.BufferAttribute(skinWeight,4));
+  if(geom.index)g2.setIndex(new THREE.BufferAttribute(geom.index.array.slice(),1));
+  if(geom.groups&&geom.groups.length)geom.groups.forEach(gr=>g2.addGroup(gr.start,gr.count,gr.materialIndex));
+  const skinned=new THREE.SkinnedMesh(g2,mesh.material);
+  skinned.name=(mesh.name||'mesh')+'_reskinned';skinned.frustumCulled=false;
+  skinned.bind(skeleton,new THREE.Matrix4());// explicit identity bind matrix: otherwise three.js re-measures the bones' CURRENT pose and overwrites our stored bind-pose inverses
+  group.add(skinned);(state.reskinMap=state.reskinMap||new Map()).set(mesh,skinned);boundMeshes++;boundVerts+=n;
+ }
+ if(!boundMeshes)return null;
+ state.reskinnedGroup=group;state.scene.add(group);updateVisibility();
+ return {boundMeshes,boundVerts};
+}
+function parseAnimation(file,text){const p=parseSMD(text,file.name);const target=state.target?.parsed;if(!target)return {name:file.name,parsed:p,valid:false,reason:'Load target reference first'};
+ const a=p.nodes.map(n=>`${n.id}:${n.name}`).join('|'),b=target.nodes.map(n=>`${n.id}:${n.name}`).join('|');return {name:file.name,parsed:p,valid:a===b,reason:a===b?'Node names and indices match':'Node hierarchy differs from target'};}
+async function addDonorPart(name,txt){
+ if(!state.target)return;state.donorNames=state.donorNames||new Set();
+ if(state.donorNames.has(name.toLowerCase()))return;state.donorNames.add(name.toLowerCase());
+ const o=parseSMD(txt,name);for(const t of o.triangles)state.target.parsed.triangles.push(t);
+ if(state.ghost){state.ghost.parent?.remove(state.ghost);state.ghost.geometry.dispose()}
+ state.ghost=buildGhost(state.target.parsed,state.targetGroup);applyAlignment();applyBoneStyle();
+ status($('fileStatus'),`Added ${name} to Raze's body (${state.target.parsed.triangles.length} triangles). Press Auto-fit to Raze again.`,'ok');
+}
+async function loadAnimations(files){
+ state.animations=[];state.aoOne=new Map();for(const f of files){if(f.name.toLowerCase().endsWith('.zip')){const zip=await JSZip.loadAsync(f);for(const [name,entry] of Object.entries(zip.files)){if(!entry.dir&&/raze_[1-4]\.smd$/i.test(name)){await addDonorPart(name.split('/').pop(),await entry.async('text'));continue}
+  if(!entry.dir&&name.toLowerCase().endsWith('.smd')){const txt=await entry.async('text');state.animations.push(parseAnimation(new File([txt],name.split('/').pop()),txt));}}}
+ else {const txt=await readText(f);state.animations.push(parseAnimation(f,txt));}}
+ renderAnimations();
+}
+function renderAnimations(){const host=$('animList'),sel=$('animSelect');host.innerHTML='';sel.innerHTML='';
+ if(!state.animations.length){host.innerHTML='<div class="listrow"><span class="muted">No animation files loaded.</span></div>';sel.innerHTML='<option value="">No animation loaded</option>';sel.dispatchEvent(new Event('change'));return}
+ state.animations.forEach((a,i)=>{const r=document.createElement('div');r.className='listrow';const n=document.createElement('span');n.textContent=a.name;const v=document.createElement('span');v.textContent=a.valid?'✓ skeleton matches':'⚠ '+a.reason;v.style.color=a.valid?'var(--good)':'var(--warn)';r.append(n,v);host.append(r);const o=document.createElement('option');o.value=i;o.textContent=a.name+(a.valid?'':' (check skeleton)');sel.append(o)});
+ sel.value='0';sel.dispatchEvent(new Event('change'));const ok=state.animations.filter(a=>a.valid).length;status($('animStatus'),`${state.animations.length} animation file(s) loaded; ${ok} match the target node hierarchy. Only matching animations should be included in the QC.` ,ok?'ok':'warn');
+}
+function playSelected(){
+ const a=state.animations[+$('animSelect').value];if(!a||!state.target)return status($('animStatus'),'Select an animation and load a reference skeleton.','warn');
+ if(!a.valid)return status($('animStatus'),'This animation has a different node hierarchy. Do not use it with this reference skeleton.','err');
+ if(!state.reskinnedGroup)status($('animStatus'),'Note: no live mesh is bound yet (go to Weight transfer → Calculate weight transfer first) — only the bone skeleton will animate.','warn');
+ // Drive the target bones' local transforms from the SMD frames. Because the live
+ // SkinnedMesh (if built) shares these exact Bone objects via its Skeleton, the
+ // renderer's per-frame skeleton.update() deforms the actual character mesh too.
+ // The blue Raze reference has its own separate rig and always plays the ORIGINAL animation.
+ stopPreview();if(state.tc)state.tc.detach();const frames=a.parsed.frames;if(!frames.length)return;
+ const dl=boneDeltas();const stale=state.xferSig&&state.xferSig!==mapSig();const ai=+$('animSelect').value;
+ const ctx={a,frames,ai,idx:0,paused:false};
+ ctx.apply=()=>{applyScales();const fr=frames[ctx.idx],ofs=animOfs(ai),rots=ofs?frameRots(fr,ofs):null;
+  for(const n of state.target.parsed.nodes){const b=state.target.byId.get(n.id),tr=fr.transforms[n.id];if(tr){b.position.copy(tr.p);const d=dl.get(n.id);if(d)b.position.add(d);if(rots)b.quaternion.copy(rots.get(n.id));else b.rotation.copy(tr.r)}}
+  state.target.group.updateMatrixWorld(true);ghostPose(fr);
+  const sl=$('animFrame');sl.max=frames.length-1;sl.value=ctx.idx;$('animFrameV').textContent=ctx.idx+' / '+(frames.length-1)};
+ ctx.start=()=>{if(state.previewTimer)clearInterval(state.previewTimer);ctx.paused=false;$('animPause').textContent='Pause';ctx.apply();state.previewTimer=setInterval(()=>{ctx.idx=(ctx.idx+1)%frames.length;ctx.apply()},1000/30)};
+ ctx.pause=()=>{if(state.previewTimer)clearInterval(state.previewTimer);state.previewTimer=null;ctx.paused=true;$('animPause').textContent='Resume'};
+ state.playCtx=ctx;ctx.start();
+ if(stale){status($('animStatus'),'Warning: you changed the key joints after the last weight transfer. This preview uses the OLD weights. Go to Weight transfer and press Calculate again.','warn');return}
+ status($('animStatus'),state.reskinnedGroup?`Previewing ${a.name} (${frames.length} frames) — Clove's bound mesh is following the bone motion. Blue = original Raze reference.`:`Previewing ${a.name} (${frames.length} frames) — skeleton only, no mesh bound yet.`,'ok');
+}
+function stopPreview(){
+ if(state.previewTimer)clearInterval(state.previewTimer);state.previewTimer=null;state.playCtx=null;
+ if(state.target&&state.ghostRig)ghostPose(state.target.parsed.frames[0]);
+ // Restore the exact bind pose (frame 0 of the reference SMD) so the mesh snaps back
+ // to how it looked right after weight transfer, not wherever the last anim frame left it.
+ if(state.target){const base=state.target.parsed.frames[0]?.transforms||{};for(const n of state.target.parsed.nodes){const b=state.target.byId.get(n.id),tr=base[n.id];if(tr){b.position.copy(state.target.bindLocal.get(n.id)||tr.p);b.rotation.copy(tr.r)}}applyScales();state.target.group.updateMatrixWorld(true)}
+}
+function smdNum(n){return (Number.isFinite(n)?n:0).toFixed(6)}
+
+// ===== Clove textures (viewer only; applied to the GLB's materials) =====
+state.tex=new Map();state.matTex=new Map();
+const NOT_COLOR=/normal|nrm|rough|metal|orm|mask|emiss|occlusion|height|bump|spec/i;
+function sceneMaterials(){const set=new Map();state.meshes.forEach(m=>(Array.isArray(m.material)?m.material:[m.material]).forEach(x=>{if(x&&!set.has(x))set.set(x,x.name||('material_'+(set.size+1)))}));return set}
+function assignTex(mat,texName){
+ if(!texName){mat.map=mat.userData.origMap!==undefined?mat.userData.origMap:null;state.matTex.delete(mat)}
+ else{if(mat.userData.origMap===undefined)mat.userData.origMap=mat.map||null;mat.map=state.tex.get(texName)||null;if(mat.color)mat.color.set(0xffffff);state.matTex.set(mat,texName)}
+ mat.needsUpdate=true;
+}
+function autoMatchTextures(){
+ const mats=sceneMaterials();if(!mats.size||!state.tex.size)return;
+ const names=[...state.tex.keys()].filter(n=>!NOT_COLOR.test(n)),norm=t=>t.toLowerCase().replace(/\.[^.]+$/,'').replace(/[^a-z0-9]/g,'');
+ for(const [mat,name] of mats){
+  if(state.matTex.has(mat))continue;
+  const mn=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  let hit=mn.length>=3?names.find(t=>{const tn=norm(t);return tn.length>=3&&(tn.includes(mn)||mn.includes(tn))}):null;
+  if(!hit&&mats.size===1&&names.length===1)hit=names[0];
+  if(hit)assignTex(mat,hit);
+ }
+}
+function renderMats(){
+ const host=$('matList');if(!host)return;host.innerHTML='';
+ const mats=sceneMaterials();
+ if(!mats.size){host.innerHTML='<div class="listrow"><span class="muted">Load the GLB to list its materials.</span></div>';return}
+ for(const [mat,name] of mats){
+  const row=document.createElement('div');row.className='listrow';const nm=document.createElement('span');nm.textContent=name;
+  const sel=document.createElement('select');sel.innerHTML='<option value="">— original —</option>';
+  for(const t of state.tex.keys()){const o=document.createElement('option');o.value=t;o.textContent=t;sel.append(o)}
+  sel.value=state.matTex.get(mat)||'';sel.onchange=()=>assignTex(mat,sel.value);row.append(nm,sel);host.append(row);
+ }
+}
+async function loadTextures(files){
+ let n=0;const bad=[];
+ for(const f of files){
+  try{
+   const url=URL.createObjectURL(f);
+   const img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error('decode'));im.src=url});
+   URL.revokeObjectURL(url);
+   const t=new THREE.Texture(img);t.flipY=false;t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;t.needsUpdate=true;
+   state.tex.set(f.name,t);n++;
+  }catch(e){bad.push(f.name)}
+ }
+ autoMatchTextures();renderMats();
+ const used=state.matTex.size,total=sceneMaterials().size;
+ status($('texStatus'),`Loaded ${n} texture(s)${total?`; ${used} of ${total} material(s) have one`:' — load the GLB to apply them'}.${bad.length?' Could not read: '+bad.join(', ')+' (use PNG, JPG, WEBP or BMP).':''}`,bad.length?'warn':'ok');
+}
+// ===== Polygon reduction: quadric edge collapse on a position-welded copy of each mesh =====
+function decimateMesh(P0,idxArr,boneOf,target){
+ const n=P0.length/3,T0=Math.floor(idxArr.length/3);
+ const wOf=new Int32Array(n),key=new Map(),wp=[];
+ for(let v=0;v<n;v++){const k=Math.round(P0[v*3]*1e4)+','+Math.round(P0[v*3+1]*1e4)+','+Math.round(P0[v*3+2]*1e4);let id=key.get(k);if(id===undefined){id=wp.length/3;key.set(k,id);wp.push(P0[v*3],P0[v*3+1],P0[v*3+2])}wOf[v]=id}
+ const m=wp.length/3,P=Float64Array.from(wp),FA=[],FO=[];
+ for(let k=0;k<T0;k++){const o0=idxArr[k*3],o1=idxArr[k*3+1],o2=idxArr[k*3+2],a=wOf[o0],b=wOf[o1],c=wOf[o2];if(a===b||b===c||a===c)continue;FA.push(a,b,c);FO.push(o0,o1,o2)}
+ const T=FA.length/3,alive=new Uint8Array(T).fill(1);
+ const distinct=()=>{const s=new Set();for(let f=0;f<T;f++)if(alive[f]){s.add(FA[f*3]);s.add(FA[f*3+1]);s.add(FA[f*3+2])}return s.size};
+ if(T<=target)return {idx:null,pos:null,tris:T,welded:distinct()};
+ const bone=new Int32Array(m);for(let v=0;v<n;v++)bone[wOf[v]]=boneOf(v)|0;
+ const vf=Array.from({length:m},()=>new Set());for(let f=0;f<T;f++){vf[FA[f*3]].add(f);vf[FA[f*3+1]].add(f);vf[FA[f*3+2]].add(f)}
+ const Q=new Float64Array(10*m);
+ const addQ=(vi,nx,ny,nz,d,w)=>{const o=vi*10;Q[o]+=w*nx*nx;Q[o+1]+=w*nx*ny;Q[o+2]+=w*nx*nz;Q[o+3]+=w*nx*d;Q[o+4]+=w*ny*ny;Q[o+5]+=w*ny*nz;Q[o+6]+=w*ny*d;Q[o+7]+=w*nz*nz;Q[o+8]+=w*nz*d;Q[o+9]+=w*d*d};
+ const nrm=(f,out)=>{const a=FA[f*3]*3,b=FA[f*3+1]*3,c=FA[f*3+2]*3,ux=P[b]-P[a],uy=P[b+1]-P[a+1],uz=P[b+2]-P[a+2],vx=P[c]-P[a],vy=P[c+1]-P[a+1],vz=P[c+2]-P[a+2];out[0]=uy*vz-uz*vy;out[1]=uz*vx-ux*vz;out[2]=ux*vy-uy*vx;return Math.hypot(out[0],out[1],out[2])};
+ const tn=[0,0,0],em=new Map(),ek=(a,b)=>a<b?a*m+b:b*m+a;
+ for(let f=0;f<T;f++){
+  const ar=nrm(f,tn);const a=FA[f*3],b=FA[f*3+1],c=FA[f*3+2];
+  if(ar>1e-12){const nx=tn[0]/ar,ny=tn[1]/ar,nz=tn[2]/ar,d=-(nx*P[a*3]+ny*P[a*3+1]+nz*P[a*3+2]),w=ar/2;addQ(a,nx,ny,nz,d,w);addQ(b,nx,ny,nz,d,w);addQ(c,nx,ny,nz,d,w)}
+  for(const [x,y] of [[a,b],[b,c],[c,a]]){const k=ek(x,y),r=em.get(k);if(!r)em.set(k,{c:1,f});else r.c++}
+ }
+ for(const [k,r] of em){if(r.c!==1)continue;const a=Math.floor(k/m),b=k%m,ar=nrm(r.f,tn);if(ar<1e-12)continue;
+  const nx=tn[0]/ar,ny=tn[1]/ar,nz=tn[2]/ar,ex=P[b*3]-P[a*3],ey=P[b*3+1]-P[a*3+1],ez=P[b*3+2]-P[a*3+2],len2=ex*ex+ey*ey+ez*ez;
+  let bx=ey*nz-ez*ny,by=ez*nx-ex*nz,bz=ex*ny-ey*nx;const bl=Math.hypot(bx,by,bz);if(bl<1e-12)continue;bx/=bl;by/=bl;bz/=bl;
+  const d=-(bx*P[a*3]+by*P[a*3+1]+bz*P[a*3+2]),w=50*len2;addQ(a,bx,by,bz,d,w);addQ(b,bx,by,bz,d,w)}
+ const ver=new Int32Array(m),dead=new Uint8Array(m),parent=Int32Array.from({length:m},(_,i)=>i);
+ const heap=[];
+ const hpush=it=>{heap.push(it);let i=heap.length-1;while(i>0){const p=(i-1)>>1;if(heap[p].cost<=heap[i].cost)break;[heap[p],heap[i]]=[heap[i],heap[p]];i=p}};
+ const hpop=()=>{const top=heap[0],last=heap.pop();if(heap.length){heap[0]=last;let i=0;for(;;){let l=i*2+1,r=l+1,s=i;if(l<heap.length&&heap[l].cost<heap[s].cost)s=l;if(r<heap.length&&heap[r].cost<heap[s].cost)s=r;if(s===i)break;[heap[s],heap[i]]=[heap[i],heap[s]];i=s}}return top};
+ const qerr=(q,x,y,z)=>q[0]*x*x+2*q[1]*x*y+2*q[2]*x*z+2*q[3]*x+q[4]*y*y+2*q[5]*y*z+2*q[6]*y+q[7]*z*z+2*q[8]*z+q[9];
+ const evalEdge=(a,b)=>{
+  const q=new Array(10);for(let i=0;i<10;i++)q[i]=Q[a*10+i]+Q[b*10+i];
+  const ax=P[a*3],ay=P[a*3+1],az=P[a*3+2],bx=P[b*3],by=P[b*3+1],bz=P[b*3+2];
+  const cs=[[ax,ay,az],[bx,by,bz],[(ax+bx)/2,(ay+by)/2,(az+bz)/2]];let best=Infinity,bp=cs[0];
+  for(const c of cs){const e=qerr(q,c[0],c[1],c[2]);if(e<best){best=e;bp=c}}
+  const len2=(ax-bx)**2+(ay-by)**2+(az-bz)**2;
+  return {cost:Math.max(best,0)*(bone[a]!==bone[b]?3:1)+len2*1e-4,a,b,va:ver[a],vb:ver[b],p:bp};
+ };
+ for(const k of em.keys())hpush(evalEdge(Math.floor(k/m),k%m));
+ let faceCount=T;const n1=[0,0,0],n2=[0,0,0];
+ const corner=(f,k,a,b,np,out)=>{const v=FA[f*3+k];if(v===a||v===b){out[0]=np[0];out[1]=np[1];out[2]=np[2]}else{out[0]=P[v*3];out[1]=P[v*3+1];out[2]=P[v*3+2]}};
+ while(faceCount>target&&heap.length){
+  const it=hpop(),a=it.a,b=it.b;
+  if(dead[a]||dead[b]||ver[a]!==it.va||ver[b]!==it.vb)continue;
+  const np=it.p,fl=[...new Set([...vf[a],...vf[b]])];let ok=true;
+  const c0=[0,0,0],c1=[0,0,0],c2=[0,0,0];
+  for(const f of fl){
+   if(!alive[f])continue;const x=FA[f*3],y=FA[f*3+1],z=FA[f*3+2],hasA=x===a||y===a||z===a,hasB=x===b||y===b||z===b;if(hasA&&hasB)continue;
+   const ar1=nrm(f,n1);
+   corner(f,0,a,b,np,c0);corner(f,1,a,b,np,c1);corner(f,2,a,b,np,c2);
+   const ux=c1[0]-c0[0],uy=c1[1]-c0[1],uz=c1[2]-c0[2],vx=c2[0]-c0[0],vy=c2[1]-c0[1],vz=c2[2]-c0[2];
+   n2[0]=uy*vz-uz*vy;n2[1]=uz*vx-ux*vz;n2[2]=ux*vy-uy*vx;const ar2=Math.hypot(n2[0],n2[1],n2[2]);
+   if(ar1>1e-12&&(ar2<ar1*1e-3||(n1[0]*n2[0]+n1[1]*n2[1]+n1[2]*n2[2])<.2*ar1*ar2)){ok=false;break}
+  }
+  if(!ok)continue;
+  for(const f of fl){
+   if(!alive[f])continue;const x=FA[f*3],y=FA[f*3+1],z=FA[f*3+2],hasA=x===a||y===a||z===a,hasB=x===b||y===b||z===b;
+   if(hasA&&hasB){alive[f]=0;faceCount--;vf[x].delete(f);vf[y].delete(f);vf[z].delete(f)}
+   else if(hasA){for(let k=0;k<3;k++)if(FA[f*3+k]===a)FA[f*3+k]=b;vf[b].add(f)}
+  }
+  vf[a].clear();dead[a]=1;parent[a]=b;P[b*3]=np[0];P[b*3+1]=np[1];P[b*3+2]=np[2];
+  for(let i=0;i<10;i++)Q[b*10+i]+=Q[a*10+i];
+  ver[a]++;ver[b]++;
+  const nb=new Set();for(const f of vf[b]){if(!alive[f])continue;for(let k=0;k<3;k++){const v=FA[f*3+k];if(v!==b)nb.add(v)}}
+  for(const v of nb)hpush(evalEdge(b,v));
+ }
+ const find=v=>{while(parent[v]!==v){parent[v]=parent[parent[v]];v=parent[v]}return v};
+ const pos=new Float32Array(n*3);
+ for(let v=0;v<n;v++){const r=find(wOf[v]);pos[v*3]=P[r*3];pos[v*3+1]=P[r*3+1];pos[v*3+2]=P[r*3+2]}
+ const idx=[];for(let f=0;f<T;f++)if(alive[f])idx.push(FO[f*3],FO[f*3+1],FO[f*3+2]);
+ return {idx,pos,tris:idx.length/3,welded:distinct()};
+}
+async function decimateAll(total){
+ const meshes=state.meshes.filter(m=>m.geometry&&m.geometry.attributes.position&&state.baked&&state.baked.get(m));
+ const cnt=meshes.map(m=>{const g=m.geometry;return (g.index?g.index.count:g.attributes.position.count)/3});
+ const T=cnt.reduce((a,b)=>a+b,0)||1,map=new Map();let before=0,after=0,welded=0;
+ for(let i=0;i<meshes.length;i++){
+  const m=meshes[i],g=m.geometry,bk=state.baked.get(m),w=state.weights.get(m)||[];
+  const idx=g.index?Array.from(g.index.array):Array.from({length:g.attributes.position.count},(_,j)=>j);
+  const tgt=Math.max(24,Math.round(total*cnt[i]/T));
+  const r=decimateMesh(bk.pos,idx,v=>(w[v]&&w[v][0]&&w[v][0].bone)||0,tgt);
+  map.set(m,r);before+=cnt[i];after+=r.tris;welded+=r.welded;await tick();
+ }
+ return {get:m=>map.get(m),before,after,welded};
+}
+function refHeader(){
+ const p=state.target.parsed;let out='version 1\nnodes\n';p.nodes.forEach(n=>out+=`${n.id} "${n.name.replace(/"/g,'')}" ${n.parent}\n`);out+='end\nskeleton\n';
+ const fr=p.frames[0];out+=`time 0\n`;p.nodes.forEach(n=>{const t0=fr.transforms[n.id]||{p:new THREE.Vector3(),r:new THREE.Euler()},t={p:state.target.bindLocal.get(n.id)||t0.p,r:t0.r};out+=`${n.id} ${smdNum(t.p.x)} ${smdNum(t.p.y)} ${smdNum(t.p.z)} ${smdNum(t.r.x)} ${smdNum(t.r.y)} ${smdNum(t.r.z)}\n`});out+='end\ntriangles\n';
+ return out;
+}
+// Every triangle as {mat, c:[3 corners]}; each corner keeps its SMD line plus the keys StudioMDL welds on
+// (vk = bone + position -> one MDL vertex, nk = bone + normal -> one MDL normal)
+function buildRefTris(dec){
+ const tris=[];
+ for(const mesh of state.meshes){const g=mesh.geometry;if(!g?.attributes.position)continue;const pos=g.attributes.position,uv=g.attributes.uv,D=dec&&dec.get(mesh),idx=D&&D.idx?D.idx:(g.index?Array.from(g.index.array):Array.from({length:pos.count},(_,i)=>i)),mat=mesh.material;
+  const bk0=state.baked?.get(mesh),bk=D&&D.pos?{pos:D.pos,norm:bk0.norm}:bk0;
+  for(let k=0;k+2<idx.length;k+=3){const tri=idx.slice(k,k+3),c=[];
+   for(const vi of tri){const v=new THREE.Vector3(bk.pos[vi*3],bk.pos[vi*3+1],bk.pos[vi*3+2]);
+    let no=new THREE.Vector3(bk.norm[vi*3],bk.norm[vi*3+1],bk.norm[vi*3+2]);const tex=uv?[uv.getX(vi),1-uv.getY(vi)]:[0,0];const weights=state.weights.get(mesh)?.[vi]||[{bone:0,weight:1}];
+    c.push({line:`${weights[0].bone} ${smdNum(v.x)} ${smdNum(v.y)} ${smdNum(v.z)} ${smdNum(no.x)} ${smdNum(no.y)} ${smdNum(no.z)} ${smdNum(tex[0])} ${smdNum(tex[1])} ${weights.length} ${weights.map(w=>`${w.bone} ${smdNum(w.weight)}`).join(' ')}\n`,
+     vk:`${weights[0].bone}|${smdNum(v.x)}|${smdNum(v.y)}|${smdNum(v.z)}`,nk:`${weights[0].bone}|${smdNum(no.x)}|${smdNum(no.y)}|${smdNum(no.z)}`});
+   }
+   tris.push({mat:matFile(mat),c});
+  }
+ }
+ return tris;
+}
+function triText(t){return t.mat+'\n'+t.c.map(x=>x.line).join('')}
+function exportReferenceSMD(dec){return refHeader()+buildRefTris(dec).map(triText).join('')+'end\n'}
+
+// ===== Vertex optimisation: split one big mesh into several $body submodels =====
+// StudioMDL/GoldSrc allow about 2048 vertices (and normals) per submodel and at most 32 bodyparts.
+// Triangles are kept in their original order and cut into chunks; each chunk becomes its own SMD + $body.
+// Nothing is moved, deleted or re-weighted, so the model looks the same, only stored as smaller pieces.
+const SPLIT_MAX_PARTS=32,SPLIT_HARD_V=2000;
+function countUnique(tris){const v=new Set(),n=new Set();for(const t of tris)for(const c of t.c){v.add(c.vk);n.add(c.nk)}return {v:v.size,n:n.size}}
+function splitRefTris(tris,maxV){
+ const maxN=Math.min(SPLIT_HARD_V,maxV+400),chunks=[];let cur=[],vs=new Set(),ns=new Set();
+ for(const t of tris){
+  let nv=0,nn=0;const sv=new Set(),sn=new Set();
+  for(const c of t.c){if(!vs.has(c.vk)&&!sv.has(c.vk)){sv.add(c.vk);nv++}if(!ns.has(c.nk)&&!sn.has(c.nk)){sn.add(c.nk);nn++}}
+  if(cur.length&&(vs.size+nv>maxV||ns.size+nn>maxN)){chunks.push(cur);cur=[];vs=new Set();ns=new Set()}
+  cur.push(t);for(const c of t.c){vs.add(c.vk);ns.add(c.nk)}
+ }
+ if(cur.length)chunks.push(cur);
+ return chunks;
+}
+function planSplit(tris,maxV){
+ maxV=Math.max(256,Math.min(SPLIT_HARD_V,Math.round(maxV)||1500));let chunks=splitRefTris(tris,maxV),raised=false;
+ while(chunks.length>SPLIT_MAX_PARTS&&maxV<SPLIT_HARD_V){maxV=Math.min(SPLIT_HARD_V,maxV+100);chunks=splitRefTris(tris,maxV);raised=true}
+ const stats=chunks.map(c=>countUnique(c)),total=stats.reduce((a,x)=>a+x.v,0);
+ return {chunks,stats,maxV,raised,total,tooMany:chunks.length>SPLIT_MAX_PARTS};
+}
+function bodyLines(model,bodies){bodies=bodies&&bodies.length?bodies:[model+'_reference'];return bodies.map((n,i)=>`$body "${i?'studio_'+String(i+1).padStart(2,'0'):'studio'}" "${n}"\n`).join('')}
+function askVertexOptimize(info){
+ return new Promise(res=>{
+  const ov=document.createElement('div');ov.className='pkov';ov.style.alignItems='center';
+  const over=info.v>2048;
+  ov.innerHTML=`<div class="pkbox" style="border-radius:14px;padding:14px;max-width:430px;margin:12px;overflow:auto">
+   <div class="section">Optimize vertices for GoldSrc / Xash3D?</div>
+   <div class="tiny" style="font-size:12px;line-height:1.5">The model has <b>${info.v.toLocaleString()}</b> vertices, <b>${info.n.toLocaleString()}</b> normals and <b>${info.t.toLocaleString()}</b> triangles in a single submodel. StudioMDL/GoldSrc handles about 2,048 vertices per submodel, and large ones can crash Xash3D on Android.${over?' <span style="color:var(--warn)">This model is over that limit.</span>':' This model is already under that limit, so splitting is not required.'}<br><br>Optimizing cuts the mesh into several smaller submodels (one extra SMD and <code>$body</code> line each). Geometry, UVs, normals, bone weights, materials, skeleton and animations are not changed in the SMDs. If the compiled model ends up shifted or sunk, press Skip instead and use <b>Optimize a compiled .MDL</b> further down the Export tab.</div>
+   <label>Max vertices per submodel</label><input type="number" id="optMaxV" value="1500" min="256" max="${SPLIT_HARD_V}" step="100">
+   <div class="btnrow" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="primary" id="optYes">Optimize</button><button id="optNo">Skip</button><button id="optCancel">Cancel export</button></div></div>`;
+  document.body.appendChild(ov);
+  const done=v=>{ov.remove();res(v)};
+  ov.querySelector('#optYes').onclick=()=>done({optimize:true,maxV:+ov.querySelector('#optMaxV').value||1500});
+  ov.querySelector('#optNo').onclick=()=>done({optimize:false});
+  ov.querySelector('#optCancel').onclick=()=>done(null);
+ });
+}
+function exportQC(model,animations,bodies){
+ let q=`// GoldSrc QC generated by GoldSrc Rig Converter\n$modelname "${model}.mdl"\n$cd "."\n$cdtexture "."\n$scale ${$('qcScale').value||1}\n$cliptotextures\n${bodyLines(model,bodies)}$eyeposition 0 0 60\n$bbox -16 -16 0 16 16 72\n$cbox -16 -16 0 16 16 72\n`;
+ animations.filter(a=>a.valid).forEach(a=>{const nm=safe(basename(a.name));q+=`$sequence "${nm}" "${nm}" fps ${$('fps').value||30} loop\n`});
+ q+='\n// Compile with a compatible GoldSrc StudioMDL compiler.\n';return q;
+}
+
+// ===== GoldSrc texture export: any image -> power-of-two 8-bit palettised BMP =====
+function matBase(mat){const m=Array.isArray(mat)?mat[0]:mat;return safe((m&&m.name)||'clove_material')}
+function matFile(mat){return matBase(mat)+'.bmp'}
+function matImage(m){const tn=state.matTex.get(m);let t=tn?state.tex.get(tn):null;if(!t&&m.map)t=m.map;return t&&t.image?t.image:null}
+function pow2Fit(v,max){let p=1;while(p*2<=v&&p*2<=max)p*=2;if(v-p>p*2-v&&p*2<=max)p*=2;return Math.max(16,Math.min(p,max))}
+function quantizeToBMP(rgba,w,h){
+ const n=w*h,px=new Uint8Array(n*3);
+ for(let i=0;i<n;i++){const a=rgba[i*4+3]/255;px[i*3]=Math.round(rgba[i*4]*a+0*(1-a));px[i*3+1]=Math.round(rgba[i*4+1]*a);px[i*3+2]=Math.round(rgba[i*4+2]*a)}
+ const sn=Math.min(n,24000),step=n/sn,S=new Array(sn);for(let i=0;i<sn;i++)S[i]=Math.floor(i*step);
+ let boxes=[S];
+ while(boxes.length<256){
+  let bi=-1,bs=1;for(let i=0;i<boxes.length;i++)if(boxes[i].length>bs){bs=boxes[i].length;bi=i}
+  if(bi<0)break;
+  const b=boxes[bi],mn=[255,255,255],mx=[0,0,0];
+  for(const q of b)for(let c=0;c<3;c++){const v=px[q*3+c];if(v<mn[c])mn[c]=v;if(v>mx[c])mx[c]=v}
+  let ch=0,rg=mx[0]-mn[0];for(let c=1;c<3;c++)if(mx[c]-mn[c]>rg){rg=mx[c]-mn[c];ch=c}
+  if(rg===0){boxes[bi]=b.slice(0,1);boxes.push(b.slice(1));if(b.length<2)break;continue}
+  b.sort((x,y)=>px[x*3+ch]-px[y*3+ch]);const m=b.length>>1;
+  boxes.splice(bi,1,b.slice(0,m),b.slice(m));
+ }
+ const pal=new Uint8Array(256*3);
+ boxes.forEach((b,i)=>{if(i>255||!b.length)return;let r=0,g=0,bl=0;for(const q of b){r+=px[q*3];g+=px[q*3+1];bl+=px[q*3+2]}pal[i*3]=Math.round(r/b.length);pal[i*3+1]=Math.round(g/b.length);pal[i*3+2]=Math.round(bl/b.length)});
+ const cache=new Map(),idx=new Uint8Array(n),used=Math.min(boxes.length,256);
+ for(let i=0;i<n;i++){
+  const r=px[i*3],g=px[i*3+1],bl=px[i*3+2],key=((r>>2)<<12)|((g>>2)<<6)|(bl>>2);let k=cache.get(key);
+  if(k===undefined){let best=0,bd=1e9;for(let j=0;j<used;j++){const dr=pal[j*3]-r,dg=pal[j*3+1]-g,db=pal[j*3+2]-bl,d=dr*dr*2+dg*dg*4+db*db*3;if(d<bd){bd=d;best=j}}k=best;cache.set(key,k)}
+  idx[i]=k;
+ }
+ const rowSize=(w+3)&~3,dataOff=14+40+1024,fileSize=dataOff+rowSize*h,out=new Uint8Array(fileSize),dv=new DataView(out.buffer);
+ out[0]=0x42;out[1]=0x4d;dv.setUint32(2,fileSize,true);dv.setUint32(10,dataOff,true);
+ dv.setUint32(14,40,true);dv.setInt32(18,w,true);dv.setInt32(22,h,true);dv.setUint16(26,1,true);dv.setUint16(28,8,true);dv.setUint32(30,0,true);dv.setUint32(34,rowSize*h,true);dv.setInt32(38,2835,true);dv.setInt32(42,2835,true);dv.setUint32(46,256,true);dv.setUint32(50,256,true);
+ for(let i=0;i<256;i++){out[54+i*4]=pal[i*3+2];out[54+i*4+1]=pal[i*3+1];out[54+i*4+2]=pal[i*3];out[54+i*4+3]=0}
+ for(let y=0;y<h;y++){const src=(h-1-y)*w,dst=dataOff+y*rowSize;for(let x=0;x<w;x++)out[dst+x]=idx[src+x]}
+ return out;
+}
+function materialToBMP(m,maxSize){
+ const img=matImage(m);let w=256,h=256;
+ if(img){const iw=img.naturalWidth||img.width||256,ih=img.naturalHeight||img.height||256;w=pow2Fit(iw,maxSize);h=pow2Fit(ih,maxSize)}
+ const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d',{willReadFrequently:true});
+ g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';
+ g.fillStyle=(m.color&&!img)?'#'+m.color.getHexString():'#808080';g.fillRect(0,0,w,h);
+ if(img)g.drawImage(img,0,0,w,h);
+ return {bytes:quantizeToBMP(g.getImageData(0,0,w,h).data,w,h),w,h,fromImage:!!img};
+}
+
+// ===== Reuse Raze's original QC: keep sequences/blends/controllers/hitboxes/attachments, swap in Clove's model + textures =====
+function buildQCFromRaze(text,model,animNames,userScale,bodies){
+ const lines=text.replace(/\r/g,'').split('\n');
+ const bal=l=>{const c=l.replace(/"[^"]*"/g,'""').replace(/\/\/.*$/,'');return (c.match(/\{/g)||[]).length-(c.match(/\}/g)||[]).length};
+ const DROP=/^(modelname|cd|cdtexture|body|bodygroup|texturegroup|texrendermode)$/i;
+ const kept=[],names=new Set(),refs=[];let i=0,seqCount=0;
+ while(i<lines.length){
+  const t=lines[i].trim();
+  if(!t.startsWith('$')){kept.push(lines[i]);i++;continue}
+  const block=[lines[i]];let depth=bal(lines[i]);i++;
+  if(depth===0){let j=i;while(j<lines.length&&lines[j].trim()==='')j++;
+   if(j<lines.length&&lines[j].trim().startsWith('{')){while(i<=j){block.push(lines[i]);depth+=bal(lines[i]);i++}}}
+  while(depth>0&&i<lines.length){block.push(lines[i]);depth+=bal(lines[i]);i++}
+  const name=t.slice(1).split(/[\s"]/)[0].toLowerCase();names.add(name);
+  if(DROP.test(name))continue;
+  if(name==='sequence'){seqCount++;const q=(block.join('\n').replace(/\/\/.*$/gm,'').match(/"[^"]*"/g)||[]).map(x=>x.slice(1,-1));q.slice(1).forEach(x=>refs.push(x.replace(/\.smd$/i,'').split(/[\\/]/).pop().toLowerCase()))}
+  kept.push(block.join('\n'));
+ }
+ const missing=[...new Set(refs)].filter(r=>r&&!animNames.has(r)&&r!==(model+'_reference').toLowerCase());
+ let head=`// Based on the original Raze QC; model, body and textures replaced by GoldSrc Rig Converter\n$modelname "${model}.mdl"\n$cd "."\n$cdtexture "."\n`;
+ if(!names.has('cliptotextures'))head+='$cliptotextures\n';
+ if(!names.has('scale'))head+=`$scale ${userScale||1}\n`;
+ head+=bodyLines(model,bodies);
+ return {qc:head+kept.join('\n')+'\n',missing,seqCount,keptScale:names.has('scale'),usesRef:refs.includes((model+'_reference').toLowerCase())};
+}
+// ===== Optimize a COMPILED .mdl: split oversized submodels into several bodyparts (binary level) =====
+// Only the mesh storage is rewritten (vertices/normals/triangles are copied unchanged). Header, bones, sequences,
+// animations, hitboxes, attachments and texture pixels are left byte-for-byte as they were.
+function splitMDL(buf,maxV){
+ const src=new Uint8Array(buf),dv=new DataView(src.buffer,src.byteOffset,src.byteLength);
+ const I=o=>dv.getInt32(o,true),F=o=>dv.getFloat32(o,true),H=k=>I(140+4*k);
+ if(src.length<400||src[0]!==0x49||src[1]!==0x44||src[2]!==0x53||src[3]!==0x54||I(4)!==10)throw new Error('Not a GoldSrc v10 (IDST) .mdl file.');
+ maxV=Math.max(256,Math.min(2000,Math.round(maxV)||1500));
+ const ntex=H(10),itex=H(11),nbp=H(16),ibp=H(17),warnings=[];
+ if(!nbp||ibp<=0||ibp>=src.length)throw new Error('The model has no bodyparts.');
+ // read every bodypart / model / triangle
+ const parts=[];let vBefore=0;
+ for(let b=0;b<nbp;b++){
+  const bo=ibp+76*b,nmod=I(bo+64),mi=I(bo+72),models=[];
+  for(let m=0;m<nmod;m++){
+   const mo=mi+112*m,M={nameBytes:src.slice(mo,mo+64),type:I(mo+64),radius:F(mo+68),nmesh:I(mo+72),imesh:I(mo+76),nv:I(mo+80),ivi:I(mo+84),iv:I(mo+88),nn:I(mo+92),inn:I(mo+96),inrm:I(mo+100),tris:[]};
+   vBefore+=M.nv;
+   for(let k=0;k<M.nmesh;k++){
+    const ms=M.imesh+20*k,skin=I(ms+8);let p=I(ms+4);
+    for(;;){const n=dv.getInt16(p,true);p+=2;if(n===0)break;const c=Math.abs(n),cs=[];
+     for(let q=0;q<c;q++){const a=dv.getInt16(p,true),nb=dv.getInt16(p+2,true);
+      if(a<0||a>=M.nv||nb<0||nb>=M.nn)throw new Error('Invalid vertex/normal reference in the source model.');
+      cs.push([a,nb,dv.getInt16(p+4,true),dv.getInt16(p+6,true)]);p+=8}
+     M.tris.push({skin,n,cs})}
+   }
+   models.push(M);
+  }
+  parts.push({nameBytes:src.slice(bo,bo+64),models});
+ }
+ // plan: cut each single-model bodypart into chunks (keeping triangle order)
+ const chunkModel=(M,limV)=>{const limN=Math.min(2000,limV+400),out=[];let cur=[],vs=new Set(),ns=new Set();
+  for(const t of M.tris){let nv=0,nn=0;const sv=new Set(),sn=new Set();
+   for(const c of t.cs){if(!vs.has(c[0])&&!sv.has(c[0])){sv.add(c[0]);nv++}if(!ns.has(c[1])&&!sn.has(c[1])){sn.add(c[1]);nn++}}
+   if(cur.length&&(vs.size+nv>limV||ns.size+nn>limN)){out.push(cur);cur=[];vs=new Set();ns=new Set()}
+   cur.push(t);for(const c of t.cs){vs.add(c[0]);ns.add(c[1])}}
+  if(cur.length)out.push(cur);return out.length?out:[[]]};
+ let plan,limit=maxV;
+ for(;;){
+  plan=parts.map(P=>{
+   if(P.models.length===1){const M=P.models[0];
+    if(M.nv<=limit&&M.nn<=Math.min(2000,limit+400))return {nameBytes:P.nameBytes,groups:[{M,tris:M.tris,keep:true}]};
+    return {split:true,nameBytes:P.nameBytes,groups:chunkModel(M,limit).map(tr=>({M,tris:tr,keep:false}))}}
+   return {nameBytes:P.nameBytes,groups:P.models.map(M=>({M,tris:M.tris,keep:true}))};
+  });
+  const nb=plan.reduce((a,p)=>a+(p.split?p.groups.length:1),0);
+  if(nb<=32||limit>=2000){break}limit=Math.min(2000,limit+100);
+ }
+ const newBodyparts=[];// each: {nameBytes,groups:[...]}
+ for(const p of plan){if(p.split)p.groups.forEach((g,i)=>newBodyparts.push({nameBytes:p.nameBytes,groups:[g],suffix:i}));else newBodyparts.push(p)}
+ for(const p of parts)if(p.models.length>1&&p.models.some(M=>M.nv>2048))warnings.push('A bodypart with several alternative models is over the limit; it was left unchanged.');
+ const nSplit=plan.filter(p=>p.split).length;
+ if(!nSplit)return {changed:false,bytes:null,info:{before:vBefore,parts:newBodyparts.length,limit,warnings}};
+ // layout of new geometry
+ let totalModels=0,totalMeshes=0;
+ const prepared=newBodyparts.map(bp=>bp.groups.map(g=>{
+  const grp=[];for(const t of g.tris){if(!grp.length||grp[grp.length-1].skin!==t.skin)grp.push({skin:t.skin,tris:[]});grp[grp.length-1].tris.push(t)}
+  if(!grp.length)grp.push({skin:0,tris:[]});
+  const vl=[...new Set(g.tris.flatMap(t=>t.cs.map(c=>c[0])))].sort((a,b)=>a-b),nl=[...new Set(g.tris.flatMap(t=>t.cs.map(c=>c[1])))].sort((a,b)=>a-b);
+  totalModels++;totalMeshes+=grp.length;return {g,grp,vl,nl}}));
+ // is the old geometry region a clean block we can drop?
+ let minTex=Infinity;for(let t=0;t<ntex;t++){const o=I(itex+80*t+76);if(o>ibp&&o<minTex)minTex=o}
+ const ptrs=[];for(const k of [1,3,5,7,9,11,15,19,21,23,25]){const o=H(k);if(o>0)ptrs.push(o)}
+ const nseq=H(6),iseq=H(7);for(let s=0;s<nseq;s++){const so=iseq+176*s;for(const d of [52,64,124]){const o=I(so+d);if(o>0)ptrs.push(o)}}
+ let compact=Number.isFinite(minTex)&&minTex>ibp&&!ptrs.some(o=>o>=ibp);
+ const P0=compact?ibp:((src.length+3)&~3);
+ const tabBP=P0,tabM=tabBP+76*newBodyparts.length,tabMesh=tabM+112*totalModels,dataStart=tabMesh+20*totalMeshes;
+ const bpBuf=new Uint8Array(76*newBodyparts.length),mBuf=new Uint8Array(112*totalModels),meshBuf=new Uint8Array(20*totalMeshes);
+ const bpV=new DataView(bpBuf.buffer),mV=new DataView(mBuf.buffer),meshV=new DataView(meshBuf.buffer);
+ const data=[];let dlen=0;const here=()=>dataStart+dlen;
+ const push=u8=>{data.push(u8);dlen+=u8.length;const pad=(4-(dlen&3))&3;if(pad){data.push(new Uint8Array(pad));dlen+=pad}};
+ let mi=0,mesh=0,base=1;const vertsAfter=[];
+ prepared.forEach((models,bi)=>{
+  const bp=newBodyparts[bi];bpBuf.set(bp.nameBytes,76*bi);
+  if(bp.suffix!==undefined){const nm=(new TextDecoder().decode(bp.nameBytes).split('\0')[0]||'studio'),tag=bp.suffix?'_'+String(bp.suffix+1).padStart(2,'0'):'',nb=new Uint8Array(64);nb.set(new TextEncoder().encode((nm+tag).slice(0,63)));bpBuf.set(nb,76*bi)}
+  bpV.setInt32(76*bi+64,models.length,true);bpV.setInt32(76*bi+68,base,true);bpV.setInt32(76*bi+72,tabM+112*mi,true);
+  models.forEach(X=>{
+   const {g,grp,vl,nl}=X,M=g.M,vm=new Map(vl.map((v,i)=>[v,i])),nm=new Map(nl.map((v,i)=>[v,i]));
+   const vinfo=new Uint8Array(vl.length),ninfo=new Uint8Array(nl.length);vl.forEach((v,i)=>vinfo[i]=src[M.ivi+v]);nl.forEach((v,i)=>ninfo[i]=src[M.inn+v]);
+   const oVi=here();push(vinfo);const oNi=here();push(ninfo);
+   const meshOffs=[];
+   for(const gr of grp){let sz=2;for(const t of gr.tris)sz+=2+8*t.cs.length;const tb=new Uint8Array(sz),tv=new DataView(tb.buffer);let p=0;
+    for(const t of gr.tris){tv.setInt16(p,t.n,true);p+=2;for(const c of t.cs){tv.setInt16(p,vm.get(c[0]),true);tv.setInt16(p+2,nm.get(c[1]),true);tv.setInt16(p+4,c[2],true);tv.setInt16(p+6,c[3],true);p+=8}}
+    tv.setInt16(p,0,true);meshOffs.push(here());push(tb)}
+   const vb=new Uint8Array(vl.length*12);vl.forEach((v,i)=>vb.set(src.subarray(M.iv+12*v,M.iv+12*v+12),12*i));const oV=here();push(vb);
+   const nbuf=new Uint8Array(nl.length*12);nl.forEach((v,i)=>nbuf.set(src.subarray(M.inrm+12*v,M.inrm+12*v+12),12*i));const oN=here();push(nbuf);
+   let rad=M.radius;if(!g.keep){rad=0;const vv=new DataView(vb.buffer);for(let i=0;i<vl.length;i++){const x=vv.getFloat32(12*i,true),y=vv.getFloat32(12*i+4,true),z=vv.getFloat32(12*i+8,true);rad=Math.max(rad,Math.sqrt(x*x+y*y+z*z))}}
+   const mo=112*mi;mBuf.set(g.keep?M.nameBytes:(()=>{const nb=new Uint8Array(64),tt='clove_part'.length;nb.set(new TextEncoder().encode(('part'+String(mi+1).padStart(2,'0')).slice(0,63)));return nb})(),mo);
+   mV.setInt32(mo+64,M.type,true);mV.setFloat32(mo+68,rad,true);mV.setInt32(mo+72,grp.length,true);mV.setInt32(mo+76,tabMesh+20*mesh,true);
+   mV.setInt32(mo+80,vl.length,true);mV.setInt32(mo+84,oVi,true);mV.setInt32(mo+88,oV,true);mV.setInt32(mo+92,nl.length,true);mV.setInt32(mo+96,oNi,true);mV.setInt32(mo+100,oN,true);
+   grp.forEach((gr,k)=>{const mo2=20*(mesh+k);meshV.setInt32(mo2,gr.tris.length,true);meshV.setInt32(mo2+4,meshOffs[k],true);meshV.setInt32(mo2+8,gr.skin,true);meshV.setInt32(mo2+12,nl.length,true);meshV.setInt32(mo2+16,oN,true)});
+   mesh+=grp.length;mi++;vertsAfter.push(vl.length);
+  });
+  base*=models.length;
+ });
+ const geom=new Uint8Array(bpBuf.length+mBuf.length+meshBuf.length+dlen);let q=0;
+ for(const u of [bpBuf,mBuf,meshBuf,...data]){geom.set(u,q);q+=u.length}
+ let out;
+ if(compact){
+  const tail=src.subarray(minTex),delta=(ibp+geom.length)-minTex;
+  out=new Uint8Array(ibp+geom.length+tail.length);out.set(src.subarray(0,ibp),0);out.set(geom,ibp);out.set(tail,ibp+geom.length);
+  const ov=new DataView(out.buffer);
+  for(let t=0;t<ntex;t++){const o=itex+80*t+76;ov.setInt32(o,ov.getInt32(o,true)+delta,true)}
+  ov.setInt32(140+4*12,H(12)+delta,true);
+ }else{
+  out=new Uint8Array(P0+geom.length);out.set(src,0);out.set(geom,P0);
+ }
+ const ov=new DataView(out.buffer);ov.setInt32(140+4*16,newBodyparts.length,true);ov.setInt32(140+4*17,P0,true);ov.setInt32(72,out.length,true);
+ return {changed:true,bytes:out,info:{before:vBefore,after:vertsAfter.reduce((a,b)=>a+b,0),parts:newBodyparts.length,perPart:vertsAfter,limit,compact,warnings,sizeBefore:src.length,sizeAfter:out.length}};
+}
+
+async function exportZip(){
+ if(!state.target||!state.meshes.length)return status($('exportStatus'),'Load the GLB and Raze reference SMD first.','err');
+ if(!state.weights.size)return status($('exportStatus'),'Calculate weight transfer before exporting.','warn');
+ if(sclHas()&&!confirm('Some bone sizes are set but not baked into the mesh. GoldSrc cannot store bone scale, so they will NOT appear in the export. Export anyway? (Cancel, then press Bake scale into mesh in the Animations tab.)'))return;
+ const model=safe($('modelName').value||'character'),zip=new JSZip();
+ let dec=null;if($('includeRef').checked&&$('decimate').checked){status($('exportStatus'),'Reducing polygons…','');await tick();dec=await decimateAll(Math.max(200,+$('maxTris').value||3500))}
+ let bodies=[model+'_reference'],split=null,optMsg='';
+ if($('includeRef').checked){
+  const tris=buildRefTris(dec),cu=countUnique(tris);
+  const ans=await askVertexOptimize({v:cu.v,n:cu.n,t:tris.length});
+  if(!ans)return status($('exportStatus'),'Export cancelled.','warn');
+  if(ans.optimize){status($('exportStatus'),'Splitting vertices into submodels…','');await tick();const pl=planSplit(tris,ans.maxV);
+   if(pl.chunks.length>1){split=pl;bodies=pl.chunks.map((c,i)=>model+'_part'+String(i+1).padStart(2,'0'));const hd=refHeader();pl.chunks.forEach((c,i)=>zip.file(bodies[i]+'.smd',hd+c.map(triText).join('')+'end\n'));
+    optMsg=` Vertex optimization: split into ${pl.chunks.length} submodels (${pl.stats.map(x=>x.v).join(', ')} vertices each; ${cu.v.toLocaleString()} vertices before, ${pl.total.toLocaleString()} after because points on a cut are stored once per side).`+(pl.raised?` The limit was raised to ${pl.maxV} to stay within ${SPLIT_MAX_PARTS} bodyparts.`:'')+(pl.tooMany?` WARNING: ${pl.chunks.length} submodels is more than the ${SPLIT_MAX_PARTS} GoldSrc allows; lower the triangle count and export again.`:'');
+   }else optMsg=` Vertex optimization: not needed, the model fits in one submodel (${cu.v.toLocaleString()} vertices).`}
+  if(!split)zip.file(model+'_reference.smd',refHeader()+tris.map(triText).join('')+'end\n');
+ }
+ const include=$('includeAnims').checked?state.animations.filter(a=>a.valid):[];
+ include.forEach(a=>zip.file(safe(basename(a.name))+'.smd',retargetAnimText(a.parsed.raw,a)));
+ let texMsg='';
+ if($('includeTex').checked){
+  status($('exportStatus'),'Converting textures to 8-bit BMP…','');await tick();
+  const seen=new Set(),done=[],fail=[],gray=[];
+  for(const mesh of state.meshes){const mt=Array.isArray(mesh.material)?mesh.material[0]:mesh.material;if(!mt)continue;const nm=matBase(mt);if(seen.has(nm))continue;seen.add(nm);
+   try{const r=materialToBMP(mt,+$('texMax').value||256);zip.file(nm+'.bmp',r.bytes);done.push(`${nm}.bmp (${r.w}x${r.h})`);if(!r.fromImage)gray.push(nm)}catch(e){fail.push(nm)}}
+  texMsg=` ${done.length} texture(s) as BMP: ${done.join(', ')}.`+(gray.length?` No image found for ${gray.join(', ')}, so a flat colour was used.`:'')+(fail.length?` Could not convert: ${fail.join(', ')}.`:'');
+ }
+ let qcMsg='';
+ if(state.razeQcText){
+  const r=buildQCFromRaze(state.razeQcText,model,new Set(include.map(a=>safe(basename(a.name)).toLowerCase())),$('qcScale').value,bodies);
+  zip.file(model+'.qc',r.qc);if(split&&r.usesRef)zip.file(model+'_reference.smd',refHeader()+'end\n');
+  qcMsg=` QC: used Raze's original QC (${r.seqCount} sequence statement(s)${r.keptScale?', kept its $scale':''}).`+(r.missing.length?` WARNING: the QC refers to ${r.missing.length} animation file(s) that are not in the ZIP, for example ${r.missing.slice(0,6).join(', ')}. Load those SMDs too, or the compiler will stop.`:' All animation files it refers to are included.');
+ }else zip.file(model+'.qc',exportQC(model,include,bodies));
+ zip.file('README.txt',`GoldSrc Rig Converter export\n\nFiles:\n${split?`- ${bodies.join('.smd, ')}.smd: the character mesh split into ${bodies.length} submodels (one $body each in the QC) to stay under GoldSrc's per-submodel vertex limit\n`:`- ${model}_reference.smd: character mesh weighted to the target skeleton\n`}- ${model}.qc: StudioMDL QC script\n- animation SMDs: included only when node names and indices match the target reference\n\nIMPORTANT:\n1. Inspect the SMD in a model viewer before compiling.\n2. Textures are included as 8-bit BMP files named after the materials (if that option was ticked). Extract this ZIP into a folder before compiling; compilers cannot read a ZIP.\n3. Verify model scale, origin, hitboxes, attachments and animation sequences.\n4. Compile with a compatible GoldSrc StudioMDL compiler.\n5. This browser tool estimates skin weights by nearest bone segments; clean up shoulders, elbows, hips, knees, clothing and accessories in Blender.\n`);
+ const blob=await zip.generateAsync({type:'blob'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=model+'_GoldSrc_export.zip';a.click();URL.revokeObjectURL(url);
+ status($('exportStatus'),`Exported ${model}_GoldSrc_export.zip with ${split?bodies.length+' mesh part SMDs':'reference SMD'}, QC and ${include.length} matching animation(s).${optMsg}${qcMsg}${texMsg}${dec?` Reduced Clove from ${Math.round(dec.before).toLocaleString()} to ${dec.after.toLocaleString()} triangles (about ${dec.welded.toLocaleString()} vertices).`:''}`,'ok');
+}
+$('glbFile').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadGLB(f).catch(err=>status($('fileStatus'),'GLB error: '+err.message,'err'))});
+$('refFile').addEventListener('change',e=>{const f=[...e.target.files];if(f.length)loadReference(f).catch(err=>status($('fileStatus'),'SMD error: '+err.message,'err'))});
+$('razeQc').addEventListener('change',async e=>{const f=e.target.files[0];state.razeQcText=f?await f.text():null;status($('exportStatus'),f?`Loaded Raze QC "${f.name}" (${state.razeQcText.length.toLocaleString()} characters). It will be used when you export.`:'Raze QC cleared; the simple generated QC will be used.',f?'ok':'')});
+$('texClear').onclick=()=>{for(const mat of [...state.matTex.keys()])assignTex(mat,'');state.tex.clear();state.matTex=new Map();$('texFiles').value='';renderMats();status($('texStatus'),'Textures removed.','')};
+$('texFiles').addEventListener('change',e=>loadTextures([...e.target.files]).catch(err=>status($('texStatus'),'Texture error: '+err.message,'err')));renderMats();
+$('animFiles').addEventListener('change',e=>loadAnimations([...e.target.files]).catch(err=>status($('animStatus'),'Animation load error: '+err.message,'err')));
+$('applyAlign').onclick=applyAlignment;$('autoFit').onclick=autoFit;$('ghostRef').onchange=applyAlignment;$('centerBtn').onclick=centerView;$('displayMode').onchange=updateVisibility;
+$('autoMap').onclick=()=>autoMap();$('resetMap').onclick=resetMap;$('transferBtn').onclick=transferWeights;
+for(const id of ['elbowBlend','wristBlend'])$(id).addEventListener('input',()=>{$(id+'V').textContent=(+$(id).value).toFixed(2);checkStale()});
+$('armClean').addEventListener('change',checkStale);
+for(const id of ['rollU','rollF','rollH'])$(id).addEventListener('input',()=>{$(id+'V').textContent=$(id).value;applyRoll()});
+$('rollSide').addEventListener('change',applyRoll);
+$('rollReset').onclick=()=>{for(const id of ['rollU','rollF','rollH']){$(id).value=0;$(id+'V').textContent='0'}applyRoll()};
+enhanceSelects($('animPick'),false);
+for(const k of ['X','Y','Z'])$('pose'+k).addEventListener('input',poseInput);
+$('poseSel').addEventListener('change',()=>{if(poseSyncing)return;const v=$('poseSel').value;if(v!=='')selectBone(+v)});
+$('poseResetBone').onclick=()=>poseReset(false);$('poseResetAll').onclick=()=>poseReset(true);$('poseBake').onclick=bakePose;$('poseUndoBake').onclick=undoBake;
+enhanceSelects($('posePick'),true);
+for(const k of ['X','Y','Z'])$('ao'+k).addEventListener('input',aoInput);
+['A','X','Y','Z'].forEach(k=>$('scl'+k).addEventListener('input',()=>sclInput(k)));
+$('sclResetBone').onclick=()=>sclReset(false);$('sclResetAll').onclick=()=>sclReset(true);$('sclBake').onclick=bakeScale;$('sclUndoBake').onclick=undoBake;
+['x','y','z'].forEach(k=>$('aoFlip'+k.toUpperCase()).onclick=()=>aoFlip(k));
+$('aoSel').addEventListener('change',()=>{aoSync();if(!animActive)return;const v=$('aoSel').value;if(v!==''&&+v!==state.sel)selectBone(+v)});$('aoScope').addEventListener('change',aoSync);$('animSelect').addEventListener('change',aoSync);
+$('aoResetBone').onclick=()=>aoReset(false);$('aoResetAll').onclick=()=>aoReset(true);
+enhanceSelects($('aoPick'),true);
+$('animPause').onclick=()=>{const c=state.playCtx;if(!c)return playSelected();c.paused?c.start():c.pause()};
+$('animFrame').addEventListener('input',()=>{const c=state.playCtx;if(!c)return;if(!c.paused)c.pause();c.idx=+$('animFrame').value;c.apply()});
+$('snapRefBtn').onclick=snapRef;$('unsnapRefBtn').onclick=()=>{unsnapRef();status($('animStatus'),'Snapshot removed.','ok')};
+$('mdlSplitBtn').onclick=async()=>{const f=$('mdlIn').files[0];if(!f)return status($('mdlStatus'),'Choose a compiled .mdl file first.','warn');
+ try{status($('mdlStatus'),'Splitting…','');await tick();const r=splitMDL(await f.arrayBuffer(),+$('mdlMaxV').value||1500);
+  if(!r.changed)return status($('mdlStatus'),`Nothing to do: every submodel already has at most ${r.info.limit} vertices (${r.info.before.toLocaleString()} vertices in total).`,'ok');
+  const blob=new Blob([r.bytes],{type:'application/octet-stream'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=f.name.replace(/\.mdl$/i,'')+'_split.mdl';a.click();URL.revokeObjectURL(url);
+  const i=r.info;status($('mdlStatus'),`Done: ${i.before.toLocaleString()} vertices split into ${i.parts} bodyparts (${i.perPart.join(', ')} vertices each; ${i.after.toLocaleString()} in total because points on a cut are stored once per side). File size ${i.sizeBefore.toLocaleString()} -> ${i.sizeAfter.toLocaleString()} bytes.${i.compact?'':' The old mesh data was left in the file (unused).'}${i.warnings.length?' '+i.warnings.join(' '):''}`,'ok')
+ }catch(e){status($('mdlStatus'),'Split failed: '+e.message,'err')}};
+$('playAnim').onclick=playSelected;$('stopAnim').onclick=stopPreview;$('exportZip').onclick=()=>exportZip().catch(e=>status($('exportStatus'),'Export failed: '+e.message,'err'));
+$('clearBtn').onclick=()=>{location.reload()};
+$('sampleBtn').onclick=()=>{alert('For this project, extract valorant_raze_decompile.zip and select raze_1.smd as the Target reference SMD. Then select the animation SMD files or the ZIP.')};
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.tabpane').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active');onTabChange(b.dataset.tab)});
+document.querySelectorAll('.viewbtns button').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+$('undoBtn').onclick=undo;
+{const el=state.renderer.domElement;let drag=null;const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),pt=new THREE.Vector3(),hit=new THREE.Vector3();
+ const setRay=e=>{const r=el.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(ndc,state.camera)};
+ const endDrag=()=>{if(!drag)return;try{el.releasePointerCapture(drag.id)}catch(_){}drag=null;state.controls.enabled=true};
+ // capture phase: if the touch lands on a bone ball we take over and OrbitControls never sees it
+ el.addEventListener('pointerdown',e=>{
+  if(drag&&e.pointerId!==drag.id){endDrag();return}
+  if(!editorActive||$('gizmoOn').checked||!state.target?.pickers||!e.isPrimary)return;
+  setRay(e);state.target.group.updateMatrixWorld(true);
+  const hits=ray.intersectObjects(state.target.pickers,false);if(!hits.length)return;
+  hits.sort((a,b)=>ray.ray.distanceSqToPoint(a.object.getWorldPosition(pt))-ray.ray.distanceSqToPoint(b.object.getWorldPosition(pt)));
+  const id=hits[0].object.userData.boneId,b=state.target.byId.get(id);
+  e.stopImmediatePropagation();e.preventDefault();
+  selectBone(id);pushUndo();state.controls.enabled=false;
+  const bw=b.getWorldPosition(new THREE.Vector3()),plane=new THREE.Plane().setFromNormalAndCoplanarPoint(state.camera.getWorldDirection(new THREE.Vector3()),bw),off=new THREE.Vector3();
+  if(ray.ray.intersectPlane(plane,hit))off.copy(hit).sub(bw);
+  drag={id:e.pointerId,b,plane,off};try{el.setPointerCapture(e.pointerId)}catch(_){}
+ },true);
+ el.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;setRay(e);if(ray.ray.intersectPlane(drag.plane,hit))moveBoneWorld(drag.b,hit.clone().sub(drag.off))});
+ el.addEventListener('pointerup',e=>{if(drag&&e.pointerId===drag.id)endDrag()});el.addEventListener('pointercancel',endDrag)}
+$('snapSelBtn').onclick=()=>{state.snapOnly=state.sel;if(state.edited)state.edited.delete(state.sel);snapToClove().catch(e=>status($('editStatus'),'Snap failed: '+e.message,'err')).finally(()=>{state.snapOnly=null})};
+$('snapBtn').onclick=()=>{state.snapOnly=null;snapToClove().catch(e=>status($('editStatus'),'Snap failed: '+e.message,'err'));}
+$('v2Toggle').onclick=()=>v2Set(!v2.on);$('v2Op').oninput=e=>{v2.bodyOp=+e.target.value/100;if(v2.wmat)v2.wmat.opacity=v2.bodyOp};$('v2Close').onclick=()=>v2Set(false);$('v2Front').onclick=()=>v2View('front');$('v2Side').onclick=()=>v2View('side');
+$('v2All').onclick=()=>{v2.all=!v2.all;$('v2All').textContent=v2.all?'Key only':'All joints';v2Refresh()};
+$('boneSel').onchange=e=>selectBone(e.target.value);
+$('gizmoOn').onchange=()=>selectBone(state.sel);
+['ghostOp','boneOp','ballSize','boneThick','boneColor'].forEach(id=>$(id).oninput=applyBoneStyle);
+$('xray').onchange=()=>applyEditorView(editorActive);
+$('cloveOpacity').oninput=()=>applyEditorView(editorActive);
+$('v1Op').oninput=e=>{const v=+e.target.value/100;if(editorActive){$('cloveOpacity').value=Math.max(.05,v);applyEditorView(true)}else{state.v1Op=v;setCloveOpacity(v)}};
+document.querySelectorAll('.nudge button').forEach(b=>b.onclick=()=>nudgeBone(b.dataset.n,+b.dataset.s));
+$('mirrorL').onclick=()=>mirrorBones('l');$('mirrorR').onclick=()=>mirrorBones('r');
+$('resetBone').onclick=resetBone;$('resetAllBones').onclick=resetAllBones;
+{const el=state.renderer.domElement;let down=null;
+ el.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:performance.now(),onGizmo:!!state.tc.axis||state.tc.dragging}});
+ el.addEventListener('pointerup',e=>{if(!down||!(editorActive||poseActive||animActive)||!state.target?.pickers)return;const d=down;down=null;
+  if(d.onGizmo||state.tc.dragging||Math.hypot(e.clientX-d.x,e.clientY-d.y)>8||performance.now()-d.t>500)return;
+  const r=el.getBoundingClientRect(),ndc=new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1),ray=new THREE.Raycaster();ray.setFromCamera(ndc,state.camera);
+  if(animActive){const T=state.target,v=new THREE.Vector3(),px=e.clientX-r.left,py=e.clientY-r.top;let best=null,bd=40;T.group.updateMatrixWorld(true);
+   for(const n of T.parsed.nodes){T.byId.get(n.id).getWorldPosition(v);v.project(state.camera);if(v.z>1)continue;const dd=Math.hypot((v.x+1)/2*r.width-px,(1-v.y)/2*r.height-py);if(dd<bd){bd=dd;best=n.id}}
+   if(best!=null)selectBone(best);return}
+  state.target.group.updateMatrixWorld(true);const hits=ray.intersectObjects(state.target.pickers,false);if(!hits.length)return;
+  const pt=new THREE.Vector3();hits.sort((a,b)=>ray.ray.distanceSqToPoint(a.object.getWorldPosition(pt))-ray.ray.distanceSqToPoint(b.object.getWorldPosition(pt)));
+  selectBone(hits[0].object.userData.boneId)})}
+$('engineState').textContent='3D engine ready';
+{const hh=()=>document.documentElement.style.setProperty('--hh',document.querySelector('header').offsetHeight+'px');hh();addEventListener('resize',hh)}
+</script>
+</body></html>

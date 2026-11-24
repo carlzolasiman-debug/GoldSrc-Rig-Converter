@@ -1,0 +1,17 @@
+{
+  "name": "goldsrc-rig-converter",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "prepare-web": "node prepare.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/filesystem": "^6.0.1",
+    "@capacitor/share": "^6.0.2",
+    "jszip": "3.10.1",
+    "three": "0.160.0"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "appId": "com.goldsrc.rigconverter",
+  "appName": "GoldSrc Rig Converter",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}
